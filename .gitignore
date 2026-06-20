@@ -1,0 +1,5 @@
+/vendor/
+composer.phar
+composer-setup.php
+*.bak
+.DS_Store

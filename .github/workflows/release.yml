@@ -1,0 +1,38 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'vs-relink.php'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract version
+        id: ver
+        run: |
+          VERSION=$(grep -m1 "VS_RELINK_VERSION" vs-relink.php | sed "s/.*, '\(.*\)'.*/\1/")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+
+      - name: Build ZIP
+        run: |
+          composer install --no-dev --optimize-autoloader --no-interaction
+          bash bin/package.sh
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.ver.outputs.version }}
+          files: dist/*.zip
+          generate_release_notes: true
