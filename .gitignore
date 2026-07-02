@@ -3,3 +3,13 @@ composer.phar
 composer-setup.php
 *.bak
 .DS_Store
+
+# Agent / IDE — local BarnaB only
+.cursor/
+cursor.md
+CURSOR.md
+AGENTS.md
+.cursorignore
+
+# Build artefacts (releases via GitHub Actions)
+/dist/
