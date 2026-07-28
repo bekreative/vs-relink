@@ -3,7 +3,7 @@
  * Plugin Name:       VS ReLink
  * Plugin URI:        https://github.com/bekreative/vs-relink
  * Description:       Lightweight link redirection and deep tracking plugin.
- * Version:           2.0.0
+ * Version:           2.0.1
  * Requires at least: 6.0
  * Requires PHP:      8.1
  * Author:            WPSuli
@@ -24,7 +24,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'VS_RELINK_VERSION', '2.0.0' );
+define( 'VS_RELINK_VERSION', '2.0.1' );
 define( 'VS_RELINK_FILE', __FILE__ );
 define( 'VS_RELINK_PATH', plugin_dir_path( __FILE__ ) );
 define( 'VS_RELINK_URL', plugin_dir_url( __FILE__ ) );
@@ -101,6 +101,14 @@ add_action(
 		if ( function_exists( 'is_plugin_active' ) && is_plugin_active( 'lw-relink/lw-relink.php' ) ) {
 			echo '<div class="notice notice-warning"><p>';
 			esc_html_e( 'VS ReLink: deactivate and remove the legacy lw-relink plugin to avoid conflicts.', 'vs-relink' );
+			echo '</p></div>';
+		}
+		if ( class_exists( Database\LegacyMigrator::class ) && Database\LegacyMigrator::needs_admin_notice() ) {
+			echo '<div class="notice notice-warning"><p>';
+			esc_html_e(
+				'VS ReLink: legacy lw_* storage IDs were detected. They are renamed automatically on load; run `wp relink migrate --dry-run` to inspect, or `wp relink migrate` to repair.',
+				'vs-relink'
+			);
 			echo '</p></div>';
 		}
 	}

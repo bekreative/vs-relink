@@ -31,17 +31,40 @@ final class CLI {
 	}
 
 	/**
-	 * Run temporary lw-relink → vs_relink storage migration.
+	 * Rename VS 1.x lw_* storage IDs to vs_*.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--dry-run]
+	 * : Report remaining legacy rows without changing the database.
 	 *
 	 * ## EXAMPLES
 	 *
 	 *     wp relink migrate
+	 *     wp relink migrate --dry-run
 	 *
 	 * @when after_wp_load
+	 *
+	 * @param array<int, string>   $args       Positional arguments.
+	 * @param array<string, mixed> $assoc_args Associative arguments.
 	 */
-	public static function migrate_legacy(): void {
-		\Vs\ReLink\Database\LegacyMigrator::maybe_migrate();
-		WP_CLI::success( 'Legacy migration check complete.' );
+	public static function migrate_legacy( $args, $assoc_args ): void {
+		$dry_run = isset( $assoc_args['dry-run'] );
+		$result  = \Vs\ReLink\Database\LegacyMigrator::migrate( $dry_run );
+
+		WP_CLI::log( $dry_run ? 'Dry-run — no changes written.' : 'Running storage ID rename…' );
+		foreach ( $result['before'] as $key => $count ) {
+			$after = (int) ( $result['after'][ $key ] ?? 0 );
+			WP_CLI::log( sprintf( '  %s: before=%d after=%d', $key, (int) $count, $after ) );
+		}
+
+		$remaining = array_sum( $result['after'] );
+		if ( $remaining > 0 ) {
+			WP_CLI::warning( sprintf( '%d legacy row(s) still remain.', $remaining ) );
+			return;
+		}
+
+		WP_CLI::success( $dry_run ? 'No legacy storage IDs detected.' : 'Storage IDs are fully on vs_*.' );
 	}
 
 	/**

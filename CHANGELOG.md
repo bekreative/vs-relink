@@ -7,6 +7,14 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [2.0.1] — 2026-07-28
+
+### Changed
+
+- Hardened `LegacyMigrator` for upgrade-time VS 1.x `lw_*` → `vs_*` DB rename (detect remaining, repair if flag set with leftovers).
+- `wp relink migrate [--dry-run]` reports before/after counts.
+- Admin notice when legacy storage IDs remain.
+
 ## [2.0.0] — 2026-07-28
 
 ### Added
