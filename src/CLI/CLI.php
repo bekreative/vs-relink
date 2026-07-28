@@ -10,7 +10,7 @@ use Vs\ReLink\Admin\LinkChecker;
 use Vs\ReLink\Core\LinkFactory;
 
 /**
- * WP-CLI Commands for LW ReLink.
+ * WP-CLI Commands for VS ReLink.
  */
 final class CLI {
 
@@ -27,6 +27,21 @@ final class CLI {
 		WP_CLI::add_command( 'relink check', [ self::class, 'health_check' ] );
 		WP_CLI::add_command( 'relink stats', [ self::class, 'show_stats' ] );
 		WP_CLI::add_command( 'relink create', [ self::class, 'create_link' ] );
+		WP_CLI::add_command( 'relink migrate', [ self::class, 'migrate_legacy' ] );
+	}
+
+	/**
+	 * Run temporary lw-relink → vs_relink storage migration.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp relink migrate
+	 *
+	 * @when after_wp_load
+	 */
+	public static function migrate_legacy(): void {
+		\Vs\ReLink\Database\LegacyMigrator::maybe_migrate();
+		WP_CLI::success( 'Legacy migration check complete.' );
 	}
 
 	/**
@@ -76,9 +91,9 @@ final class CLI {
 		$table = Schema::get_clicks_table();
 		
 		$total_clicks = $wpdb->get_var( "SELECT COUNT(*) FROM $table" );
-		$total_links  = wp_count_posts( 'lw_relink' )->publish;
+		$total_links  = wp_count_posts( 'vs_relink' )->publish;
 		
-		WP_CLI::line( "LW ReLink Overview:" );
+		WP_CLI::line( "VS ReLink Overview:" );
 		WP_CLI::line( "- Total Links: $total_links" );
 		WP_CLI::line( "- Total Clicks: $total_clicks" );
 	}

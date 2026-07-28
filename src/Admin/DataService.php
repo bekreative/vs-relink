@@ -43,13 +43,13 @@ final class DataService {
 					'title'          => $post->post_title,
 					'slug'           => $post->post_name,
 					'description'    => $post->post_content,
-					'original_url'   => get_post_meta( $post->ID, '_lw_relink_original_url', true ),
-					'target_url'     => get_post_meta( $post->ID, '_lw_relink_target_url', true ),
-					'redirect_type'  => get_post_meta( $post->ID, '_lw_relink_type', true ),
-					'is_nofollow'    => get_post_meta( $post->ID, '_lw_relink_nofollow', true ),
-					'is_sponsored'   => get_post_meta( $post->ID, '_lw_relink_sponsored', true ),
-					'forward_params' => get_post_meta( $post->ID, '_lw_relink_forward_params', true ),
-					'tracking'       => get_post_meta( $post->ID, '_lw_relink_tracking', true ),
+					'original_url'   => get_post_meta( $post->ID, '_vs_relink_original_url', true ),
+					'target_url'     => get_post_meta( $post->ID, '_vs_relink_target_url', true ),
+					'redirect_type'  => get_post_meta( $post->ID, '_vs_relink_type', true ),
+					'is_nofollow'    => get_post_meta( $post->ID, '_vs_relink_nofollow', true ),
+					'is_sponsored'   => get_post_meta( $post->ID, '_vs_relink_sponsored', true ),
+					'forward_params' => get_post_meta( $post->ID, '_vs_relink_forward_params', true ),
+					'tracking'       => get_post_meta( $post->ID, '_vs_relink_tracking', true ),
 					'group'          => $group,
 					'partner'        => $partner,
 				];
@@ -153,12 +153,12 @@ final class DataService {
 				continue;
 			}
 
-			update_post_meta( $post_id, '_lw_relink_target_url', $target_url );
-			update_post_meta( $post_id, '_lw_relink_type', $link['redirect_type'] ?? '301' );
-			update_post_meta( $post_id, '_lw_relink_nofollow', $link['is_nofollow'] ?? 'no' );
-			update_post_meta( $post_id, '_lw_relink_sponsored', $link['is_sponsored'] ?? 'no' );
-			update_post_meta( $post_id, '_lw_relink_forward_params', $link['forward_params'] ?? 'no' );
-			update_post_meta( $post_id, '_lw_relink_tracking', $link['tracking'] ?? 'yes' );
+			update_post_meta( $post_id, '_vs_relink_target_url', $target_url );
+			update_post_meta( $post_id, '_vs_relink_type', $link['redirect_type'] ?? '301' );
+			update_post_meta( $post_id, '_vs_relink_nofollow', $link['is_nofollow'] ?? 'no' );
+			update_post_meta( $post_id, '_vs_relink_sponsored', $link['is_sponsored'] ?? 'no' );
+			update_post_meta( $post_id, '_vs_relink_forward_params', $link['forward_params'] ?? 'no' );
+			update_post_meta( $post_id, '_vs_relink_tracking', $link['tracking'] ?? 'yes' );
 
 			if ( ! empty( $link['group'] ) ) {
 				$term = wp_insert_term( $link['group']['name'], LinkGroup::TAXONOMY, [ 'slug' => $link['group']['slug'] ] );
@@ -190,16 +190,16 @@ final class DataService {
 		];
 
 		$query = new \WP_Query( $args );
-		$rules = "# LW ReLink Export\n";
+		$rules = "# VS ReLink Export\n";
 		$rules .= "RewriteEngine On\n\n";
 
 		if ( $query->have_posts() ) {
 			foreach ( $query->posts as $post ) {
-				$target_url = get_post_meta( $post->ID, '_lw_relink_target_url', true );
-				$type       = get_post_meta( $post->ID, '_lw_relink_type', true ) ?: '301';
+				$target_url = get_post_meta( $post->ID, '_vs_relink_target_url', true );
+				$type       = get_post_meta( $post->ID, '_vs_relink_type', true ) ?: '301';
 				
 				// Get relative path for the link
-				$base  = get_option( 'lw_relink_base', 're' );
+				$base  = get_option( 'vs_relink_base', 're' );
 				$terms = wp_get_object_terms( $post->ID, LinkGroup::TAXONOMY );
 				$path  = '/';
 				

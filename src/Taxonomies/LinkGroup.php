@@ -12,7 +12,7 @@ final class LinkGroup {
 	/**
 	 * Taxonomy slug.
 	 */
-	public const TAXONOMY = 'lw_link_group';
+	public const TAXONOMY = 'vs_link_group';
 
 	/**
 	 * Register the taxonomy.

@@ -18,7 +18,7 @@ final class LinkChecker {
 	 * @return array Results of the check.
 	 */
 	public static function check_link( int $post_id ): array {
-		$target_url = get_post_meta( $post_id, '_lw_relink_target_url', true );
+		$target_url = get_post_meta( $post_id, '_vs_relink_target_url', true );
 		$short_url  = get_permalink( $post_id );
 
 		if ( empty( $target_url ) ) {

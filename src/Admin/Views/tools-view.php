@@ -1,6 +1,6 @@
 <?php
 /**
- * Tools view for LW ReLink.
+ * Tools view for VS ReLink.
  */
 
 declare(strict_types=1);
@@ -42,7 +42,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 		<div class="card">
 			<h2><?php esc_html_e( 'Server Redirection (.htaccess)', 'vs-relink' ); ?></h2>
 			<p><?php esc_html_e( 'Generate static redirection rules for your .htaccess file.', 'vs-relink' ); ?></p>
-			<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=lw_relink&page=vs-relink-tools&lw_relink_download_htaccess=1' ) ); ?>" class="button button-secondary"><?php esc_html_e( 'Download .htaccess Rules', 'vs-relink' ); ?></a>
+			<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=vs_relink&page=vs-relink-tools&vs_relink_download_htaccess=1' ) ); ?>" class="button button-secondary"><?php esc_html_e( 'Download .htaccess Rules', 'vs-relink' ); ?></a>
 		</div>
 
 		<div class="card" style="grid-column: 1 / -1;">
@@ -70,8 +70,8 @@ jQuery(document).ready(function($) {
 		status.show().removeClass('notice-error notice-success').addClass('notice-info').html('<p><?php echo esc_js( __( 'Migration in progress...', 'vs-relink' ) ); ?></p>');
 
 		$.post(ajaxurl, {
-			action: 'lw_relink_migrate',
-			security: '<?php echo esc_js( wp_create_nonce( 'lw_relink_migration_nonce' ) ); ?>'
+			action: 'vs_relink_migrate',
+			security: '<?php echo esc_js( wp_create_nonce( 'vs_relink_migration_nonce' ) ); ?>'
 		}, function(response) {
 			if (response.success) {
 				status.removeClass('notice-info').addClass('notice-success').html('<p>' + response.data.message + '</p>');
@@ -86,8 +86,8 @@ jQuery(document).ready(function($) {
 	$('.vs-relink-export-json').on('click', function(e) {
 		e.preventDefault();
 		$.post(ajaxurl, {
-			action: 'lw_relink_export_json',
-			security: '<?php echo esc_js( wp_create_nonce( 'lw_relink_data_nonce' ) ); ?>'
+			action: 'vs_relink_export_json',
+			security: '<?php echo esc_js( wp_create_nonce( 'vs_relink_data_nonce' ) ); ?>'
 		}, function(response) {
 			if (response.success) {
 				var blob = new Blob([JSON.stringify(response.data, null, 2)], {type: 'application/json'});
@@ -116,8 +116,8 @@ jQuery(document).ready(function($) {
 			status.show().removeClass('notice-error notice-success').addClass('notice-info').html('<p><?php echo esc_js( __( 'Importing links...', 'vs-relink' ) ); ?></p>');
 
 			$.post(ajaxurl, {
-				action: 'lw_relink_import_json',
-				security: '<?php echo esc_js( wp_create_nonce( 'lw_relink_data_nonce' ) ); ?>',
+				action: 'vs_relink_import_json',
+				security: '<?php echo esc_js( wp_create_nonce( 'vs_relink_data_nonce' ) ); ?>',
 				links: links,
 				find: $('#vs-relink-find').val(),
 				replace: $('#vs-relink-replace').val()
@@ -142,8 +142,8 @@ jQuery(document).ready(function($) {
 		resultsList.empty().show();
 
 		$.post(ajaxurl, {
-			action: 'lw_relink_get_ids',
-			security: '<?php echo esc_js( wp_create_nonce( 'lw_relink_data_nonce' ) ); ?>'
+			action: 'vs_relink_get_ids',
+			security: '<?php echo esc_js( wp_create_nonce( 'vs_relink_data_nonce' ) ); ?>'
 		}, function(response) {
 			if (!response.success || !response.data.length) {
 				status.removeClass('notice-info').addClass('notice-error').html('<p><?php echo esc_js( __( 'No links found to scan.', 'vs-relink' ) ); ?></p>');
@@ -162,8 +162,8 @@ jQuery(document).ready(function($) {
 					return;
 				}
 				$.post(ajaxurl, {
-					action: 'lw_relink_check_single',
-					security: '<?php echo esc_js( wp_create_nonce( 'lw_relink_data_nonce' ) ); ?>',
+					action: 'vs_relink_check_single',
+					security: '<?php echo esc_js( wp_create_nonce( 'vs_relink_data_nonce' ) ); ?>',
 					post_id: ids[current]
 				}, function(res) {
 					current++;

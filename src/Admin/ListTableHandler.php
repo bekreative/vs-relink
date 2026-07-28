@@ -69,7 +69,7 @@ final class ListTableHandler {
 				break;
 
 			case 'target_url':
-				$target = get_post_meta( $post_id, '_lw_relink_target_url', true );
+				$target = get_post_meta( $post_id, '_vs_relink_target_url', true );
 				echo '<a href="' . esc_url( $target ) . '" target="_blank" style="display:inline-block; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' . esc_html( $target ) . '</a>';
 				break;
 

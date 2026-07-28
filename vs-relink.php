@@ -3,7 +3,7 @@
  * Plugin Name:       VS ReLink
  * Plugin URI:        https://github.com/bekreative/vs-relink
  * Description:       Lightweight link redirection and deep tracking plugin.
- * Version:           1.3.0
+ * Version:           2.0.0
  * Requires at least: 6.0
  * Requires PHP:      8.1
  * Author:            WPSuli
@@ -20,35 +20,43 @@ declare(strict_types=1);
 
 namespace Vs\ReLink;
 
-use Vs\Core\Admin\HubMenu;
-use Vs\Core\Bootstrap\AutoloadGuard;
-use Vs\Core\I18n\TextDomain;
-use Vs\Core\Updater\GitHubReleaseUpdater;
-
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'VS_RELINK_VERSION', '1.3.0' );
+define( 'VS_RELINK_VERSION', '2.0.0' );
 define( 'VS_RELINK_FILE', __FILE__ );
 define( 'VS_RELINK_PATH', plugin_dir_path( __FILE__ ) );
 define( 'VS_RELINK_URL', plugin_dir_url( __FILE__ ) );
 define( 'VS_RELINK_BASENAME', plugin_basename( __FILE__ ) );
 
 $vs_relink_autoload = VS_RELINK_PATH . 'vendor/autoload.php';
-if ( is_readable( $vs_relink_autoload ) ) {
-	require_once $vs_relink_autoload;
+
+if ( ! is_readable( $vs_relink_autoload ) ) {
+	add_action(
+		'admin_notices',
+		static function (): void {
+			if ( ! current_user_can( 'activate_plugins' ) ) {
+				return;
+			}
+			echo '<div class="notice notice-error"><p>';
+			esc_html_e(
+				'VS ReLink: Autoloader not found. Run "composer install" in the plugin directory or install from a release ZIP.',
+				'vs-relink'
+			);
+			echo '</p></div>';
+		}
+	);
+	return;
 }
 
-AutoloadGuard::require_vendor( VS_RELINK_PATH, Plugin::class, 'VS ReLink' );
+require_once $vs_relink_autoload;
 
 if ( ! class_exists( Plugin::class ) ) {
 	return;
 }
 
-TextDomain::load( 'vs-relink', VS_RELINK_PATH );
-HubMenu::boot();
-GitHubReleaseUpdater::register( 'vs-relink', VS_RELINK_FILE, VS_RELINK_VERSION );
+load_plugin_textdomain( 'vs-relink', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
 
 /**
  * Main plugin instance.
@@ -75,6 +83,7 @@ register_deactivation_hook(
 add_action(
 	'plugins_loaded',
 	static function (): void {
+		Database\LegacyMigrator::maybe_migrate();
 		vs_relink();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
@@ -89,7 +98,7 @@ add_action(
 		if ( ! current_user_can( 'activate_plugins' ) ) {
 			return;
 		}
-		if ( is_plugin_active( 'lw-relink/lw-relink.php' ) ) {
+		if ( function_exists( 'is_plugin_active' ) && is_plugin_active( 'lw-relink/lw-relink.php' ) ) {
 			echo '<div class="notice notice-warning"><p>';
 			esc_html_e( 'VS ReLink: deactivate and remove the legacy lw-relink plugin to avoid conflicts.', 'vs-relink' );
 			echo '</p></div>';

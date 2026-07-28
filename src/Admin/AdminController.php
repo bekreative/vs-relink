@@ -28,11 +28,11 @@ final class AdminController {
 		add_action( 'admin_menu', [ $this, 'add_reports_page' ] );
 		add_action( 'admin_menu', [ $this, 'fix_add_new_submenu' ], 99 );
 		add_action( 'admin_init', [ $this, 'register_settings' ] );
-		add_action( 'wp_ajax_lw_relink_migrate', [ $this, 'ajax_migrate' ] );
-		add_action( 'wp_ajax_lw_relink_export_json', [ $this, 'ajax_export_json' ] );
-		add_action( 'wp_ajax_lw_relink_import_json', [ $this, 'ajax_import_json' ] );
-		add_action( 'wp_ajax_lw_relink_get_ids', [ $this, 'ajax_get_ids' ] );
-		add_action( 'wp_ajax_lw_relink_check_single', [ $this, 'ajax_check_single' ] );
+		add_action( 'wp_ajax_vs_relink_migrate', [ $this, 'ajax_migrate' ] );
+		add_action( 'wp_ajax_vs_relink_export_json', [ $this, 'ajax_export_json' ] );
+		add_action( 'wp_ajax_vs_relink_import_json', [ $this, 'ajax_import_json' ] );
+		add_action( 'wp_ajax_vs_relink_get_ids', [ $this, 'ajax_get_ids' ] );
+		add_action( 'wp_ajax_vs_relink_check_single', [ $this, 'ajax_check_single' ] );
 		add_action( 'admin_init', [ $this, 'handle_htaccess_download' ] );
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_assets' ] );
 		add_action( 'admin_footer', [ $this, 'render_admin_scripts' ] );
@@ -113,7 +113,7 @@ final class AdminController {
 
 			$('.vs-relink-copy').on('click', function(e) {
 				e.preventDefault();
-				var url = $(this).data('url') || (homeUrl + $('#lw_relink_short_path').val()).replace(/\/+/g, '/');
+				var url = $(this).data('url') || (homeUrl + $('#vs_relink_short_path').val()).replace(/\/+/g, '/');
 				var btn = $(this);
 
 				navigator.clipboard.writeText(url).then(function() {
@@ -124,9 +124,9 @@ final class AdminController {
 				});
 			});
 
-			$('#lw_relink_short_path').on('input', function() {
+			$('#vs_relink_short_path').on('input', function() {
 				var preview = homeUrl + $(this).val().replace(/^\/+/, '');
-				$('#lw_relink_short_preview').text(preview);
+				$('#vs_relink_short_preview').text(preview);
 				$('.vs-relink-copy').data('url', preview);
 			});
 		});
@@ -147,7 +147,7 @@ final class AdminController {
 	 * AJAX Get all ReLink IDs for batch check.
 	 */
 	public function ajax_get_ids(): void {
-		check_ajax_referer( 'lw_relink_data_nonce', 'security' );
+		check_ajax_referer( 'vs_relink_data_nonce', 'security' );
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_die();
 		}
@@ -160,7 +160,7 @@ final class AdminController {
 	 * AJAX Check a single link.
 	 */
 	public function ajax_check_single(): void {
-		check_ajax_referer( 'lw_relink_data_nonce', 'security' );
+		check_ajax_referer( 'vs_relink_data_nonce', 'security' );
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_die();
 		}
@@ -180,7 +180,7 @@ final class AdminController {
 	 * AJAX JSON Export handler.
 	 */
 	public function ajax_export_json(): void {
-		check_ajax_referer( 'lw_relink_data_nonce', 'security' );
+		check_ajax_referer( 'vs_relink_data_nonce', 'security' );
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_die();
 		}
@@ -193,7 +193,7 @@ final class AdminController {
 	 * AJAX JSON Import handler.
 	 */
 	public function ajax_import_json(): void {
-		check_ajax_referer( 'lw_relink_data_nonce', 'security' );
+		check_ajax_referer( 'vs_relink_data_nonce', 'security' );
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_die();
 		}
@@ -211,7 +211,7 @@ final class AdminController {
 	 * Handle htaccess download.
 	 */
 	public function handle_htaccess_download(): void {
-		if ( ! isset( $_GET['lw_relink_download_htaccess'] ) ) {
+		if ( ! isset( $_GET['vs_relink_download_htaccess'] ) ) {
 			return;
 		}
 		if ( ! current_user_can( 'manage_options' ) ) {
@@ -230,7 +230,7 @@ final class AdminController {
 	 * AJAX Migration handler.
 	 */
 	public function ajax_migrate(): void {
-		check_ajax_referer( 'lw_relink_migration_nonce', 'security' );
+		check_ajax_referer( 'vs_relink_migration_nonce', 'security' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( [ 'message' => 'Unauthorized' ] );
@@ -246,7 +246,7 @@ final class AdminController {
 	 */
 	public function add_reports_page(): void {
 		add_submenu_page(
-			'edit.php?post_type=lw_relink',
+			'edit.php?post_type=vs_relink',
 			__( 'Reports', 'vs-relink' ),
 			__( 'Reports', 'vs-relink' ),
 			'manage_options',
@@ -255,7 +255,7 @@ final class AdminController {
 		);
 
 		add_submenu_page(
-			'edit.php?post_type=lw_relink',
+			'edit.php?post_type=vs_relink',
 			__( 'Tools', 'vs-relink' ),
 			__( 'Tools', 'vs-relink' ),
 			'manage_options',
@@ -264,7 +264,7 @@ final class AdminController {
 		);
 
 		add_submenu_page(
-			'edit.php?post_type=lw_relink',
+			'edit.php?post_type=vs_relink',
 			__( 'Settings', 'vs-relink' ),
 			__( 'Settings', 'vs-relink' ),
 			'manage_options',
@@ -277,10 +277,10 @@ final class AdminController {
 	 * Register plugin settings.
 	 */
 	public function register_settings(): void {
-		register_setting( 'lw_relink_settings', 'lw_relink_base' );
-		register_setting( 'lw_relink_settings', 'lw_relink_exclude_bots' );
-		register_setting( 'lw_relink_settings', 'lw_relink_log_retention' );
-		register_setting( 'lw_relink_settings', 'lw_relink_webhook_url' );
+		register_setting( 'vs_relink_settings', 'vs_relink_base' );
+		register_setting( 'vs_relink_settings', 'vs_relink_exclude_bots' );
+		register_setting( 'vs_relink_settings', 'vs_relink_log_retention' );
+		register_setting( 'vs_relink_settings', 'vs_relink_webhook_url' );
 	}
 
 	/**

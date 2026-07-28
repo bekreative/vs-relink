@@ -1,17 +1,34 @@
 # Changelog
 
-All notable changes to **LW ReLink** are documented here.
+All notable changes to **VS ReLink** are documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
  versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [2.0.0] — 2026-07-28
+
+### Added
+
+- Standalone bootstrap (no `verysimple/vs-core` / HubMenu / GitHub updater).
+- Canonical `Storage\Ids` (`vs_relink`, `vs_relink_*` options/meta/table).
+- Temporary `Database\LegacyMigrator` (lw → vs) + `wp relink migrate`.
+
+### Fixed
+
+- Add Link white screen: auto-draft redirect runs on `load-{hook}` before admin headers.
+
+### Changed
+
+- **Breaking:** storage CPT/taxonomy/meta/options/table IDs moved from `lw_*` to `vs_*` (migrator required for existing sites).
+- Branding strings use VS ReLink.
+
 ## [1.3.0] — 2026-06-20
 
 ### Added
 
-- **Very Simple** rebrand from LW ReLink (`vs-relink`, `Vs\ReLink\`, `verysimple/vs-core` hub/updater).
+- **Very Simple** rebrand from VS ReLink (`vs-relink`, `Vs\ReLink\`, `verysimple/vs-core` hub/updater).
 - `LegacyIds` storage contract — same CPT, meta, options, and click table as lw-relink (no DB migration).
 
 ### Fixed
@@ -22,7 +39,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
-- **Partner taxonomy** (`lw_relink_partner`) — configure affiliate domains and URL suffix per partner (e.g. Sonoff `?ref=66&utm_source=affiliate`).
+- **Partner taxonomy** (`vs_relink_partner`) — configure affiliate domains and URL suffix per partner (e.g. Sonoff `?ref=66&utm_source=affiliate`).
 - **Affiliate link workflow** — Original URL + Partner → computed Target URL + auto-suggested short slug on the link edit screen.
 - Domain-based partner auto-suggestion in admin (`link-metabox.js`).
 - `PartnerUrlBuilder`, `LinkFactory` for shared create/preview logic (admin, REST, CLI).
@@ -37,7 +54,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 
 - **Native admin UI** — branded shell with sidebar navigation (Links, Add Link, Partners, Groups, Reports, Tools, Settings) across all ReLink screens.
-- Custom **link editor page** replaces the Gutenberg CPT screen; block editor disabled for `lw_relink`.
+- Custom **link editor page** replaces the Gutenberg CPT screen; block editor disabled for `vs_relink`.
 - Unified `admin.css` replaces `admin-reports.css`; reports and settings pages use the new shell layout.
 
 ## [1.1.0] — 2026-06-04
@@ -46,9 +63,9 @@ First public release.
 
 ### Added
 
-- Custom post type `lw_relink` with hierarchical slugs and configurable permalink base (default `re`).
+- Custom post type `vs_relink` with hierarchical slugs and configurable permalink base (default `re`).
 - Redirect types **301**, **302**, **307**; optional query-parameter forwarding to target URL.
-- Click tracking in `{prefix}lw_relink_clicks` (IP, referrer, user agent, bot flag).
+- Click tracking in `{prefix}vs_relink_clicks` (IP, referrer, user agent, bot flag).
 - Per-link tracking toggle; global bot exclusion and log retention settings.
 - **Auto-linker** — keyword-based first-match links in post content.
 - Link options: nofollow, sponsored, forward parameters, redirect type.

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Vs\ReLink\PostTypes;
 
-use Vs\ReLink\Storage\LegacyIds;
+use Vs\ReLink\Storage\Ids;
 
 /**
  * Custom Post Type registration for ReLinks.
@@ -14,7 +14,7 @@ final class ReLink {
 	/**
 	 * Post type slug (stable storage ID).
 	 */
-	public const POST_TYPE = LegacyIds::POST_TYPE;
+	public const POST_TYPE = Ids::POST_TYPE;
 
 	/**
 	 * Register the post type.
@@ -38,7 +38,7 @@ final class ReLink {
 			'not_found_in_trash' => __( 'No relinks found in Trash.', 'vs-relink' ),
 		];
 
-		$base = get_option( 'lw_relink_base', 're' ) ?: '';
+		$base = get_option( 'vs_relink_base', 're' ) ?: '';
 
 		$args = [
 			'labels'             => $labels,

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Vs\ReLink\Database;
 
+use Vs\ReLink\Storage\Ids;
+
 /**
  * Handles database schema creation and updates.
  */
@@ -11,24 +13,22 @@ final class Schema {
 
 	/**
 	 * Activate the schema.
-	 *
-	 * @return void
 	 */
 	public static function activate(): void {
+		LegacyMigrator::maybe_migrate();
 		self::create_tables();
-		update_option( 'lw_relink_db_version', '1.1.0' );
+		update_option( Ids::OPTION_DB_VERSION, '1.1.0' );
+		flush_rewrite_rules();
 	}
 
 	/**
 	 * Create database tables.
-	 *
-	 * @return void
 	 */
 	private static function create_tables(): void {
 		global $wpdb;
 
 		$charset_collate = $wpdb->get_charset_collate();
-		$table_name      = $wpdb->prefix . 'lw_relink_clicks';
+		$table_name      = self::get_clicks_table();
 
 		$sql = "CREATE TABLE $table_name (
 			id bigint(20) NOT NULL AUTO_INCREMENT,
@@ -49,11 +49,9 @@ final class Schema {
 
 	/**
 	 * Get the clicks table name.
-	 *
-	 * @return string
 	 */
 	public static function get_clicks_table(): string {
 		global $wpdb;
-		return $wpdb->prefix . 'lw_relink_clicks';
+		return $wpdb->prefix . Ids::TABLE_CLICKS;
 	}
 }

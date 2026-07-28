@@ -39,7 +39,7 @@ final class RedirectHandler {
 			$path = trim( parse_url( $_SERVER['REQUEST_URI'], PHP_URL_PATH ), '/' );
 			
 			// Remove base if present
-			$base = get_option( 'lw_relink_base', 're' );
+			$base = get_option( 'vs_relink_base', 're' );
 			if ( $base && str_starts_with( $path, $base . '/' ) ) {
 				$path = substr( $path, strlen( $base ) + 1 );
 			}
@@ -58,10 +58,10 @@ final class RedirectHandler {
 	 * @return void
 	 */
 	private function execute_redirection( int $link_id ): void {
-		$target_url    = get_post_meta( $link_id, '_lw_relink_target_url', true );
-		$redirect_type = (int) get_post_meta( $link_id, '_lw_relink_type', true ) ?: 301;
-		$forward_params = get_post_meta( $link_id, '_lw_relink_forward_params', true ) === 'yes';
-		$enable_tracking = get_post_meta( $link_id, '_lw_relink_tracking', true ) !== 'no';
+		$target_url    = get_post_meta( $link_id, '_vs_relink_target_url', true );
+		$redirect_type = (int) get_post_meta( $link_id, '_vs_relink_type', true ) ?: 301;
+		$forward_params = get_post_meta( $link_id, '_vs_relink_forward_params', true ) === 'yes';
+		$enable_tracking = get_post_meta( $link_id, '_vs_relink_tracking', true ) !== 'no';
 
 		if ( empty( $target_url ) ) {
 			return;
@@ -92,7 +92,7 @@ final class RedirectHandler {
 		global $wpdb;
 
 		$is_bot = $this->is_bot();
-		$exclude_bots = get_option( 'lw_relink_exclude_bots', '1' ) === '1';
+		$exclude_bots = get_option( 'vs_relink_exclude_bots', '1' ) === '1';
 
 		if ( $is_bot && $exclude_bots ) {
 			return; // Skip bot if setting is active

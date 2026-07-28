@@ -18,7 +18,7 @@ final class LinkEditorPage {
 	 */
 	public static function register(): void {
 		add_action( 'admin_menu', [ self::class, 'register_page' ] );
-		add_action( 'admin_post_lw_relink_save_link', [ self::class, 'handle_save' ] );
+		add_action( 'admin_post_vs_relink_save_link', [ self::class, 'handle_save' ] );
 		add_action( 'load-post-new.php', [ self::class, 'redirect_new_post' ] );
 		add_action( 'load-post.php', [ self::class, 'redirect_edit_post' ] );
 		add_filter( 'get_edit_post_link', [ self::class, 'filter_edit_link' ], 10, 3 );
@@ -30,13 +30,49 @@ final class LinkEditorPage {
 	 * Hidden submenu for the custom editor.
 	 */
 	public static function register_page(): void {
-		add_submenu_page(
+		$hook = add_submenu_page(
 			'',
 			__( 'Edit ReLink', 'vs-relink' ),
 			__( 'Edit ReLink', 'vs-relink' ),
 			'edit_posts',
 			self::PAGE_SLUG,
 			[ self::class, 'render_page' ]
+		);
+
+		if ( is_string( $hook ) && $hook !== '' ) {
+			add_action( 'load-' . $hook, [ self::class, 'maybe_create_and_redirect' ] );
+		}
+	}
+
+	/**
+	 * Create auto-draft and redirect before admin headers (Add Link / no link_id).
+	 */
+	public static function maybe_create_and_redirect(): void {
+		$link_id = isset( $_GET['link_id'] ) ? (int) $_GET['link_id'] : 0;
+		if ( $link_id > 0 ) {
+			return;
+		}
+
+		$post_id = self::create_auto_draft();
+		if ( is_wp_error( $post_id ) ) {
+			wp_die( esc_html( $post_id->get_error_message() ) );
+		}
+
+		wp_safe_redirect( self::editor_url( (int) $post_id ) );
+		exit;
+	}
+
+	/**
+	 * @return int|\WP_Error
+	 */
+	private static function create_auto_draft() {
+		return wp_insert_post(
+			[
+				'post_type'   => ReLink::POST_TYPE,
+				'post_status' => 'auto-draft',
+				'post_title'  => '',
+			],
+			true
 		);
 	}
 
@@ -62,15 +98,7 @@ final class LinkEditorPage {
 			return;
 		}
 
-		$post_id = wp_insert_post(
-			[
-				'post_type'   => ReLink::POST_TYPE,
-				'post_status' => 'auto-draft',
-				'post_title'  => '',
-			],
-			true
-		);
-
+		$post_id = self::create_auto_draft();
 		if ( is_wp_error( $post_id ) ) {
 			return;
 		}
@@ -156,21 +184,7 @@ final class LinkEditorPage {
 		$link_id = isset( $_GET['link_id'] ) ? (int) $_GET['link_id'] : 0;
 
 		if ( $link_id <= 0 ) {
-			$post_id = wp_insert_post(
-				[
-					'post_type'   => ReLink::POST_TYPE,
-					'post_status' => 'auto-draft',
-					'post_title'  => '',
-				],
-				true
-			);
-
-			if ( is_wp_error( $post_id ) ) {
-				wp_die( esc_html( $post_id->get_error_message() ) );
-			}
-
-			wp_safe_redirect( self::editor_url( (int) $post_id ) );
-			exit;
+			wp_die( esc_html__( 'Link not found.', 'vs-relink' ) );
 		}
 
 		$post = get_post( $link_id );
@@ -191,7 +205,7 @@ final class LinkEditorPage {
 	 */
 	public static function handle_save(): void {
 		$post_id = isset( $_POST['link_id'] ) ? (int) $_POST['link_id'] : 0;
-		check_admin_referer( 'lw_relink_save_link_' . $post_id );
+		check_admin_referer( 'vs_relink_save_link_' . $post_id );
 
 		if ( $post_id <= 0 ) {
 			wp_die( esc_html__( 'Invalid link.', 'vs-relink' ) );

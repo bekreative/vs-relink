@@ -1,4 +1,4 @@
-# LW ReLink
+# VS ReLink
 
 Lightweight WordPress link shortener, redirection, and click tracking — no bloat, PHP 8.1+, strict types.
 
@@ -15,7 +15,7 @@ Create short URLs, redirect visitors to any destination, and measure clicks with
 
 1. Clone or copy into `wp-content/plugins/vs-relink`.
 2. Optional: run `composer install` in the plugin directory (PSR-4 autoload; a built-in fallback autoloader works without Composer).
-3. Activate **LW ReLink** in WordPress admin.
+3. Activate **VS ReLink** in WordPress admin.
 4. Go to **ReLinks → Settings**, set your **Permalink Base** (default: `re`), then save.
 5. Visit **Settings → Permalinks** and click **Save Changes** once (flushes rewrite rules).
 
@@ -51,14 +51,14 @@ https://example.com/summer-sale/
 
 ### Short links & redirects
 
-- Custom post type `lw_relink` with hierarchical slugs (folder-like structure)
+- Custom post type `vs_relink` with hierarchical slugs (folder-like structure)
 - Redirect types: **301**, **302**, **307**
 - Optional **forward query parameters** from the short URL to the target
 - **404 fallback matching** — resolves deep paths even when rewrite rules miss a match
 
 ### Click tracking
 
-- Dedicated table: `{prefix}lw_relink_clicks`
+- Dedicated table: `{prefix}vs_relink_clicks`
 - Per click: link ID, timestamp, IP, referrer, user agent, bot flag
 - Per-link toggle: enable/disable tracking
 - Global **bot exclusion** (Settings) — skips crawlers in statistics
@@ -108,8 +108,8 @@ One product URL can have **separate ReLinks per partner** (duplicate detection i
 
 ### Taxonomies
 
-- **Link Groups** (`lw_link_group`) — hierarchical folders in admin
-- **Partners** (`lw_relink_partner`) — affiliate domain + URL suffix configuration
+- **Link Groups** (`vs_link_group`) — hierarchical folders in admin
+- **Partners** (`vs_relink_partner`) — affiliate domain + URL suffix configuration
 
 ### Admin
 
@@ -131,7 +131,7 @@ Native WordPress admin shell with sidebar navigation (no Gutenberg editor for li
 
 ### Pretty Link Lite migration
 
-Imports links from the `wp_prli_links` table (Pretty Link Lite) into `lw_relink` posts, preserving slugs where possible.
+Imports links from the `wp_prli_links` table (Pretty Link Lite) into `vs_relink` posts, preserving slugs where possible.
 
 ### JSON export / import
 
@@ -177,12 +177,12 @@ Requires `manage_options`.
 
 ## Database
 
-### Clicks table: `wp_lw_relink_clicks`
+### Clicks table: `wp_vs_relink_clicks`
 
 | Column | Type | Notes |
 |--------|------|-------|
 | `id` | BIGINT | Primary key |
-| `link_id` | BIGINT | `lw_relink` post ID |
+| `link_id` | BIGINT | `vs_relink` post ID |
 | `timestamp` | DATETIME | Click time |
 | `ip_address` | VARCHAR(45) | Visitor IP |
 | `referer` | TEXT | HTTP Referer |
@@ -193,24 +193,24 @@ Requires `manage_options`.
 
 | Meta key | Purpose |
 |----------|---------|
-| `_lw_relink_original_url` | Clean product URL (affiliate workflow) |
-| `_lw_relink_target_url` | Destination URL |
-| `_lw_relink_type` | Redirect code (301, 302, 307) |
-| `_lw_relink_keywords` | Auto-linker keywords |
-| `_lw_relink_nofollow` | `yes` / empty |
-| `_lw_relink_sponsored` | `yes` / empty |
-| `_lw_relink_forward_params` | `yes` / empty |
-| `_lw_relink_tracking` | `no` disables tracking |
+| `_vs_relink_original_url` | Clean product URL (affiliate workflow) |
+| `_vs_relink_target_url` | Destination URL |
+| `_vs_relink_type` | Redirect code (301, 302, 307) |
+| `_vs_relink_keywords` | Auto-linker keywords |
+| `_vs_relink_nofollow` | `yes` / empty |
+| `_vs_relink_sponsored` | `yes` / empty |
+| `_vs_relink_forward_params` | `yes` / empty |
+| `_vs_relink_tracking` | `no` disables tracking |
 
 ### Options
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `lw_relink_base` | `re` | Permalink prefix (empty = root) |
-| `lw_relink_exclude_bots` | `1` | Exclude bots from stats |
-| `lw_relink_log_retention` | `0` | Days to keep clicks (`0` = forever) |
-| `lw_relink_webhook_url` | — | Outbound webhook endpoint |
-| `lw_relink_db_version` | `1.1.0` | Schema version |
+| `vs_relink_base` | `re` | Permalink prefix (empty = root) |
+| `vs_relink_exclude_bots` | `1` | Exclude bots from stats |
+| `vs_relink_log_retention` | `0` | Days to keep clicks (`0` = forever) |
+| `vs_relink_webhook_url` | — | Outbound webhook endpoint |
+| `vs_relink_db_version` | `1.1.0` | Schema version |
 
 ## Architecture
 
@@ -263,12 +263,12 @@ After changing **Permalink Base**, save plugin settings and flush permalinks.
 
 ## Pairing with LW Download
 
-Use **LW ReLink** for marketing/affiliate short links and **LW Download** for file delivery and download statistics. They are independent plugins and can run on the same site.
+Use **VS ReLink** for marketing/affiliate short links and **LW Download** for file delivery and download statistics. They are independent plugins and can run on the same site.
 
 | Plugin | Repo |
 |--------|------|
 | LW Download | [bekreative/lw-download](https://github.com/bekreative/lw-download) |
-| LW ReLink | [bekreative/vs-relink](https://github.com/bekreative/vs-relink) |
+| VS ReLink | [bekreative/vs-relink](https://github.com/bekreative/vs-relink) |
 
 ## License
 

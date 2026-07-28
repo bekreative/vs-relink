@@ -53,7 +53,7 @@ final class LinkFactory {
 			return [
 				'link_id'    => $existing_id,
 				'short_url'  => ShortUrlHelper::get_full_url( $existing_id ),
-				'target_url' => (string) get_post_meta( $existing_id, '_lw_relink_target_url', true ),
+				'target_url' => (string) get_post_meta( $existing_id, '_vs_relink_target_url', true ),
 				'partner'    => $term->slug,
 				'existed'    => true,
 			];
@@ -86,22 +86,22 @@ final class LinkFactory {
 
 		$post_id = (int) $post_id;
 
-		update_post_meta( $post_id, '_lw_relink_original_url', $normalized );
-		update_post_meta( $post_id, '_lw_relink_target_url', $target_url );
-		update_post_meta( $post_id, '_lw_relink_type', (string) ( $args['redirect_type'] ?? '301' ) );
-		update_post_meta( $post_id, '_lw_relink_tracking', ( $args['tracking'] ?? true ) ? 'yes' : 'no' );
+		update_post_meta( $post_id, '_vs_relink_original_url', $normalized );
+		update_post_meta( $post_id, '_vs_relink_target_url', $target_url );
+		update_post_meta( $post_id, '_vs_relink_type', (string) ( $args['redirect_type'] ?? '301' ) );
+		update_post_meta( $post_id, '_vs_relink_tracking', ( $args['tracking'] ?? true ) ? 'yes' : 'no' );
 
 		if ( ! empty( $args['nofollow'] ) ) {
-			update_post_meta( $post_id, '_lw_relink_nofollow', 'yes' );
+			update_post_meta( $post_id, '_vs_relink_nofollow', 'yes' );
 		}
 		if ( ! empty( $args['sponsored'] ) ) {
-			update_post_meta( $post_id, '_lw_relink_sponsored', 'yes' );
+			update_post_meta( $post_id, '_vs_relink_sponsored', 'yes' );
 		}
 		if ( ! empty( $args['forward_params'] ) ) {
-			update_post_meta( $post_id, '_lw_relink_forward_params', 'yes' );
+			update_post_meta( $post_id, '_vs_relink_forward_params', 'yes' );
 		}
 		if ( ! empty( $args['keywords'] ) ) {
-			update_post_meta( $post_id, '_lw_relink_keywords', sanitize_textarea_field( (string) $args['keywords'] ) );
+			update_post_meta( $post_id, '_vs_relink_keywords', sanitize_textarea_field( (string) $args['keywords'] ) );
 		}
 
 		wp_set_object_terms( $post_id, [ $partner_term_id ], Partner::TAXONOMY, false );

@@ -15,10 +15,10 @@ final class LogRotation {
 	 * Constructor.
 	 */
 	public function __construct() {
-		add_action( 'lw_relink_daily_cleanup', [ $this, 'run_cleanup' ] );
+		add_action( 'vs_relink_daily_cleanup', [ $this, 'run_cleanup' ] );
 		
-		if ( ! wp_next_scheduled( 'lw_relink_daily_cleanup' ) ) {
-			wp_schedule_event( time(), 'daily', 'lw_relink_daily_cleanup' );
+		if ( ! wp_next_scheduled( 'vs_relink_daily_cleanup' ) ) {
+			wp_schedule_event( time(), 'daily', 'vs_relink_daily_cleanup' );
 		}
 	}
 
@@ -28,7 +28,7 @@ final class LogRotation {
 	 * @return void
 	 */
 	public function run_cleanup(): void {
-		$days = (int) get_option( 'lw_relink_log_retention', '0' );
+		$days = (int) get_option( 'vs_relink_log_retention', '0' );
 		if ( $days <= 0 ) {
 			return;
 		}

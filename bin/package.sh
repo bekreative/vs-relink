@@ -17,11 +17,11 @@ zip -r "${OUT}" . \
   -x './dist/*' \
   -x './.github/*' \
   -x './composer.lock' \
+  -x './tests/*' \
   -x './.phpunit.cache/*' \
   -x './cursor.md' \
   -x './CURSOR.md' \
   -x './AGENTS.md' \
-  -x './.cursor/*' \
-  -x './vendor/verysimple/vs-core/vendor/*'
+  -x './.cursor/*'
 
 echo "Built ${OUT}"

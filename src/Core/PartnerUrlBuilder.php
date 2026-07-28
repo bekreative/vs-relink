@@ -151,7 +151,7 @@ final class PartnerUrlBuilder {
 				'post__not_in'   => $exclude_post_id > 0 ? [ $exclude_post_id ] : [],
 				'meta_query'     => [
 					[
-						'key'   => '_lw_relink_original_url',
+						'key'   => '_vs_relink_original_url',
 						'value' => $normalized,
 					],
 				],

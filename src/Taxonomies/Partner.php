@@ -12,17 +12,17 @@ final class Partner {
 	/**
 	 * Taxonomy slug.
 	 */
-	public const TAXONOMY = 'lw_relink_partner';
+	public const TAXONOMY = 'vs_relink_partner';
 
 	/**
 	 * Term meta: comma/newline-separated domains.
 	 */
-	public const META_DOMAINS = '_lw_partner_domains';
+	public const META_DOMAINS = '_vs_partner_domains';
 
 	/**
 	 * Term meta: affiliate URL suffix (query string).
 	 */
-	public const META_URL_SUFFIX = '_lw_partner_url_suffix';
+	public const META_URL_SUFFIX = '_vs_partner_url_suffix';
 
 	/**
 	 * Register the taxonomy.

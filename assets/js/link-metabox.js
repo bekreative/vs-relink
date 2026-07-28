@@ -59,7 +59,7 @@
 		}
 
 		var match = '';
-		$('#lw_relink_partner option').each(function () {
+		$('#vs_relink_partner option').each(function () {
 			var $opt = $(this);
 			if (!$opt.val()) {
 				return;
@@ -74,21 +74,21 @@
 	}
 
 	function isPartnerMode() {
-		var partner = $('#lw_relink_partner').val();
-		var original = $('#lw_relink_original_url').val();
+		var partner = $('#vs_relink_partner').val();
+		var original = $('#vs_relink_original_url').val();
 		return partner && original;
 	}
 
 	function updateTargetPreview() {
-		var partner = $('#lw_relink_partner').val();
-		var original = $('#lw_relink_original_url').val();
-		var $target = $('#lw_relink_target_url');
-		var $preview = $('#lw_relink_target_preview');
-		var $wrap = $('#lw_relink_target_preview_wrap');
-		var $desc = $('#lw_relink_target_desc');
+		var partner = $('#vs_relink_partner').val();
+		var original = $('#vs_relink_original_url').val();
+		var $target = $('#vs_relink_target_url');
+		var $preview = $('#vs_relink_target_preview');
+		var $wrap = $('#vs_relink_target_preview_wrap');
+		var $desc = $('#vs_relink_target_desc');
 
 		if (partner && original) {
-			var suffix = $('#lw_relink_partner option:selected').data('suffix') || '';
+			var suffix = $('#vs_relink_partner option:selected').data('suffix') || '';
 			var target = buildTargetUrl(original, suffix);
 			$target.val(target).prop('readonly', true);
 			$preview.text(target);
@@ -102,8 +102,8 @@
 	}
 
 	function updateShortSlugSuggestion() {
-		var original = $('#lw_relink_original_url').val();
-		var $short = $('#lw_relink_short_path');
+		var original = $('#vs_relink_original_url').val();
+		var $short = $('#vs_relink_short_path');
 		if (!original || ($short.val() && $short.data('user-edited'))) {
 			return;
 		}
@@ -115,8 +115,8 @@
 	}
 
 	function suggestPartner() {
-		var original = $('#lw_relink_original_url').val();
-		var $partner = $('#lw_relink_partner');
+		var original = $('#vs_relink_original_url').val();
+		var $partner = $('#vs_relink_partner');
 		if (!original || $partner.data('user-selected')) {
 			return;
 		}
@@ -127,18 +127,18 @@
 	}
 
 	$(function () {
-		$('#lw_relink_original_url').on('input blur', function () {
+		$('#vs_relink_original_url').on('input blur', function () {
 			suggestPartner();
 			updateShortSlugSuggestion();
 			updateTargetPreview();
 		});
 
-		$('#lw_relink_partner').on('change', function () {
+		$('#vs_relink_partner').on('change', function () {
 			$(this).data('user-selected', true);
 			updateTargetPreview();
 		});
 
-		$('#lw_relink_short_path').on('input', function () {
+		$('#vs_relink_short_path').on('input', function () {
 			$(this).data('user-edited', true);
 		});
 

@@ -32,10 +32,10 @@ final class Permalinks {
 			return $post_link;
 		}
 
-		$base = get_option( 'lw_relink_base', 're' );
+		$base = get_option( 'vs_relink_base', 're' );
 		
 		if ( ! $base ) {
-			// Remove the default 'lw_relink/' part from the URL for root-level
+			// Remove the default 'vs_relink/' part from the URL for root-level
 			$post_type_slug = ReLink::POST_TYPE;
 			$post_link = str_replace( "/{$post_type_slug}/", "/", $post_link );
 		}
@@ -49,7 +49,7 @@ final class Permalinks {
 	 * @return void
 	 */
 	public function add_rewrite_rules(): void {
-		$base = get_option( 'lw_relink_base', 're' );
+		$base = get_option( 'vs_relink_base', 're' );
 		
 		if ( $base ) {
 			// Base-level hierarchical: domain.com/re/parent/child

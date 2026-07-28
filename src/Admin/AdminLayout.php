@@ -35,7 +35,7 @@ final class AdminLayout {
 	}
 
 	/**
-	 * Whether the current screen belongs to LW ReLink.
+	 * Whether the current screen belongs to VS ReLink.
 	 */
 	public static function is_relink_screen(): bool {
 		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
@@ -44,8 +44,8 @@ final class AdminLayout {
 		}
 
 		return ReLink::POST_TYPE === $screen->post_type
-			|| str_starts_with( $screen->id, 'lw_relink' )
-			|| str_starts_with( $screen->id, 'edit-lw_relink' )
+			|| str_starts_with( $screen->id, 'vs_relink' )
+			|| str_starts_with( $screen->id, 'edit-vs_relink' )
 			|| in_array( $screen->taxonomy, [ Partner::TAXONOMY, LinkGroup::TAXONOMY ], true );
 	}
 
@@ -103,13 +103,13 @@ final class AdminLayout {
 			return 'links';
 		}
 
-		if ( 'lw_relink_page_vs-relink-settings' === $screen->id ) {
+		if ( 'vs_relink_page_vs-relink-settings' === $screen->id ) {
 			return 'settings';
 		}
-		if ( 'lw_relink_page_vs-relink-tools' === $screen->id ) {
+		if ( 'vs_relink_page_vs-relink-tools' === $screen->id ) {
 			return 'tools';
 		}
-		if ( 'lw_relink_page_vs-relink-reports' === $screen->id ) {
+		if ( 'vs_relink_page_vs-relink-reports' === $screen->id ) {
 			return 'reports';
 		}
 		if ( 'admin_page_vs-relink-edit' === $screen->id ) {
@@ -144,7 +144,7 @@ final class AdminLayout {
 			<div class="lwr-admin-brand">
 				<span class="lwr-admin-brand__icon dashicons dashicons-admin-links" aria-hidden="true"></span>
 				<div class="lwr-admin-brand__text">
-					<strong><?php esc_html_e( 'LW ReLink', 'vs-relink' ); ?></strong>
+					<strong><?php esc_html_e( 'VS ReLink', 'vs-relink' ); ?></strong>
 					<span class="lwr-admin-brand__version"><?php echo esc_html( VS_RELINK_VERSION ); ?></span>
 				</div>
 			</div>

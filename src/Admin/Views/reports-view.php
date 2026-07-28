@@ -1,6 +1,6 @@
 <?php
 /**
- * Reports view for LW ReLink.
+ * Reports view for VS ReLink.
  */
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -43,7 +43,7 @@ foreach ( $trends as $trend ) {
 
 $all_groups = get_terms( [ 'taxonomy' => LinkGroup::TAXONOMY, 'hide_empty' => false ] );
 $all_links  = get_posts( [ 'post_type' => ReLink::POST_TYPE, 'posts_per_page' => -1, 'orderby' => 'title', 'order' => 'ASC' ] );
-$base_url   = admin_url( 'edit.php?post_type=lw_relink&page=' . ReportsHelper::PAGE );
+$base_url   = admin_url( 'edit.php?post_type=vs_relink&page=' . ReportsHelper::PAGE );
 
 /**
  * @param float $change Percentage change.
@@ -121,7 +121,7 @@ $render_change = static function ( float $change ): void {
 				?>
 			</h2>
 			<form method="get" class="lwr-filters">
-				<input type="hidden" name="post_type" value="lw_relink" />
+				<input type="hidden" name="post_type" value="vs_relink" />
 				<input type="hidden" name="page" value="<?php echo esc_attr( ReportsHelper::PAGE ); ?>" />
 				<?php if ( $filter_link ) : ?>
 					<input type="hidden" name="link_id" value="<?php echo esc_attr( (string) $filter_link ); ?>" />

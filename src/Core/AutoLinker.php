@@ -71,7 +71,7 @@ final class AutoLinker {
 			JOIN {$wpdb->postmeta} m ON p.ID = m.post_id 
 			WHERE p.post_type = '" . ReLink::POST_TYPE . "' 
 			AND p.post_status = 'publish' 
-			AND m.meta_key = '_lw_relink_keywords' 
+			AND m.meta_key = '_vs_relink_keywords' 
 			AND m.meta_value != ''
 		", ARRAY_A );
 	}

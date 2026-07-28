@@ -49,8 +49,8 @@ final class LinkEditorService {
 			);
 		}
 
-		$partner_id   = isset( $data['lw_relink_partner'] ) ? (int) $data['lw_relink_partner'] : 0;
-		$original_url = isset( $data['lw_relink_original_url'] ) ? esc_url_raw( (string) $data['lw_relink_original_url'] ) : '';
+		$partner_id   = isset( $data['vs_relink_partner'] ) ? (int) $data['vs_relink_partner'] : 0;
+		$original_url = isset( $data['vs_relink_original_url'] ) ? esc_url_raw( (string) $data['vs_relink_original_url'] ) : '';
 		$is_partner_mode = $partner_id > 0 && $original_url !== '';
 
 		if ( $is_partner_mode ) {
@@ -58,18 +58,18 @@ final class LinkEditorService {
 			$suffix     = PartnerUrlBuilder::get_partner_suffix( $partner_id );
 			$target_url = PartnerUrlBuilder::build_target_url( $normalized, $suffix );
 
-			update_post_meta( $post_id, '_lw_relink_original_url', $normalized );
-			update_post_meta( $post_id, '_lw_relink_target_url', $target_url );
+			update_post_meta( $post_id, '_vs_relink_original_url', $normalized );
+			update_post_meta( $post_id, '_vs_relink_target_url', $target_url );
 			wp_set_object_terms( $post_id, [ $partner_id ], Partner::TAXONOMY, false );
 		} else {
 			if ( $original_url !== '' ) {
-				update_post_meta( $post_id, '_lw_relink_original_url', PartnerUrlBuilder::normalize_original_url( $original_url ) );
+				update_post_meta( $post_id, '_vs_relink_original_url', PartnerUrlBuilder::normalize_original_url( $original_url ) );
 			} else {
-				delete_post_meta( $post_id, '_lw_relink_original_url' );
+				delete_post_meta( $post_id, '_vs_relink_original_url' );
 			}
 
-			if ( isset( $data['lw_relink_target_url'] ) ) {
-				update_post_meta( $post_id, '_lw_relink_target_url', esc_url_raw( (string) $data['lw_relink_target_url'] ) );
+			if ( isset( $data['vs_relink_target_url'] ) ) {
+				update_post_meta( $post_id, '_vs_relink_target_url', esc_url_raw( (string) $data['vs_relink_target_url'] ) );
 			}
 
 			if ( $partner_id > 0 ) {
@@ -80,11 +80,11 @@ final class LinkEditorService {
 		}
 
 		$fields = [
-			'lw_relink_type'           => '_lw_relink_type',
-			'lw_relink_nofollow'       => '_lw_relink_nofollow',
-			'lw_relink_sponsored'      => '_lw_relink_sponsored',
-			'lw_relink_forward_params' => '_lw_relink_forward_params',
-			'lw_relink_keywords'       => '_lw_relink_keywords',
+			'vs_relink_type'           => '_vs_relink_type',
+			'vs_relink_nofollow'       => '_vs_relink_nofollow',
+			'vs_relink_sponsored'      => '_vs_relink_sponsored',
+			'vs_relink_forward_params' => '_vs_relink_forward_params',
+			'vs_relink_keywords'       => '_vs_relink_keywords',
 		];
 
 		foreach ( $fields as $field_id => $meta_key ) {
@@ -95,10 +95,10 @@ final class LinkEditorService {
 			}
 		}
 
-		update_post_meta( $post_id, '_lw_relink_tracking', ! empty( $data['lw_relink_tracking'] ) ? 'yes' : 'no' );
+		update_post_meta( $post_id, '_vs_relink_tracking', ! empty( $data['vs_relink_tracking'] ) ? 'yes' : 'no' );
 
-		if ( isset( $data['lw_relink_short_path'] ) ) {
-			$path = sanitize_text_field( (string) $data['lw_relink_short_path'] );
+		if ( isset( $data['vs_relink_short_path'] ) ) {
+			$path = sanitize_text_field( (string) $data['vs_relink_short_path'] );
 			if ( $path !== '' ) {
 				$result = ShortUrlHelper::update_from_path_suffix( $post_id, $path );
 				if ( is_wp_error( $result ) ) {

@@ -112,7 +112,7 @@ final class StatsRepository {
 			"SELECT p.ID, p.post_title, COUNT(c.id) as click_count 
 			 FROM $posts p 
 			 LEFT JOIN $table c ON p.ID = c.link_id 
-			 WHERE p.post_type = 'lw_relink' AND p.post_status = 'publish' 
+			 WHERE p.post_type = 'vs_relink' AND p.post_status = 'publish' 
 			 GROUP BY p.ID 
 			 ORDER BY click_count DESC",
 			ARRAY_A
@@ -188,7 +188,7 @@ final class StatsRepository {
 		$table      = Schema::get_clicks_table();
 		$period_sql = $wpdb->prepare( 'c.timestamp >= DATE_SUB(NOW(), INTERVAL %d DAY)', $days );
 
-		$where = "WHERE p.post_type = 'lw_relink' AND p.post_status = 'publish'";
+		$where = "WHERE p.post_type = 'vs_relink' AND p.post_status = 'publish'";
 
 		if ( $link_id ) {
 			$where .= $wpdb->prepare( ' AND p.ID = %d', $link_id );

@@ -19,7 +19,7 @@ final class ReportsHelper {
 	 */
 	public static function filter_url( ?int $link_id = null, ?int $group_id = null, int $days = 30 ): string {
 		$args = [
-			'post_type' => 'lw_relink',
+			'post_type' => 'vs_relink',
 			'page'      => self::PAGE,
 			'days'      => max( 1, $days ),
 		];

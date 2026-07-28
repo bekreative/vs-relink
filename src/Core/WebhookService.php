@@ -17,7 +17,7 @@ final class WebhookService {
 	 * @return void
 	 */
 	public static function trigger( int $link_id, array $data ): void {
-		$webhook_url = get_option( 'lw_relink_webhook_url' );
+		$webhook_url = get_option( 'vs_relink_webhook_url' );
 		if ( empty( $webhook_url ) ) {
 			return;
 		}

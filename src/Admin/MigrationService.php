@@ -88,12 +88,12 @@ final class MigrationService {
 		}
 
 		// Update Metadata.
-		update_post_meta( $post_id, '_lw_relink_target_url', $data['url'] );
-		update_post_meta( $post_id, '_lw_relink_type', $data['redirect_type'] ?? '301' );
-		update_post_meta( $post_id, '_lw_relink_nofollow', ( $data['nofollow'] ?? 0 ) ? 'yes' : 'no' );
-		update_post_meta( $post_id, '_lw_relink_sponsored', ( $data['sponsored'] ?? 0 ) ? 'yes' : 'no' );
-		update_post_meta( $post_id, '_lw_relink_forward_params', ( $data['param_forwarding'] ?? 0 ) ? 'yes' : 'no' );
-		update_post_meta( $post_id, '_lw_relink_tracking', ( $data['track_me'] ?? 1 ) ? 'yes' : 'no' );
+		update_post_meta( $post_id, '_vs_relink_target_url', $data['url'] );
+		update_post_meta( $post_id, '_vs_relink_type', $data['redirect_type'] ?? '301' );
+		update_post_meta( $post_id, '_vs_relink_nofollow', ( $data['nofollow'] ?? 0 ) ? 'yes' : 'no' );
+		update_post_meta( $post_id, '_vs_relink_sponsored', ( $data['sponsored'] ?? 0 ) ? 'yes' : 'no' );
+		update_post_meta( $post_id, '_vs_relink_forward_params', ( $data['param_forwarding'] ?? 0 ) ? 'yes' : 'no' );
+		update_post_meta( $post_id, '_vs_relink_tracking', ( $data['track_me'] ?? 1 ) ? 'yes' : 'no' );
 
 		// Handle Groups if applicable.
 		if ( ! empty( $data['group_id'] ) ) {
