@@ -20,7 +20,7 @@ final class LinkGroup {
 	 * @return void
 	 */
 	public static function register(): void {
-		$labels = [
+		$labels = array(
 			'name'              => _x( 'Link Groups', 'taxonomy general name', 'vs-relink' ),
 			'singular_name'     => _x( 'Link Group', 'taxonomy singular name', 'vs-relink' ),
 			'search_items'      => __( 'Search Link Groups', 'vs-relink' ),
@@ -32,18 +32,24 @@ final class LinkGroup {
 			'add_new_item'      => __( 'Add New Link Group', 'vs-relink' ),
 			'new_item_name'     => __( 'New Link Group Name', 'vs-relink' ),
 			'menu_name'         => __( 'Groups (Folders)', 'vs-relink' ),
-		];
+		);
 
-		$args = [
+		$args = array(
 			'hierarchical'      => true,
 			'labels'            => $labels,
 			'show_ui'           => true,
 			'show_admin_column' => true,
 			'query_var'         => true,
-			'rewrite'           => [ 'slug' => 're-group' ],
+			'rewrite'           => array( 'slug' => 're-group' ),
 			'show_in_rest'      => true,
-		];
+			'capabilities'      => array(
+				'manage_terms' => 'edit_relinks',
+				'edit_terms'   => 'edit_relinks',
+				'delete_terms' => 'edit_relinks',
+				'assign_terms' => 'edit_relinks',
+			),
+		);
 
-		register_taxonomy( self::TAXONOMY, [ \Vs\ReLink\PostTypes\ReLink::POST_TYPE ], $args );
+		register_taxonomy( self::TAXONOMY, array( \Vs\ReLink\PostTypes\ReLink::POST_TYPE ), $args );
 	}
 }

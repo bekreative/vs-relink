@@ -42,7 +42,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 		<div class="card">
 			<h2><?php esc_html_e( 'Server Redirection (.htaccess)', 'vs-relink' ); ?></h2>
 			<p><?php esc_html_e( 'Generate static redirection rules for your .htaccess file.', 'vs-relink' ); ?></p>
-			<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=vs_relink&page=vs-relink-tools&vs_relink_download_htaccess=1' ) ); ?>" class="button button-secondary"><?php esc_html_e( 'Download .htaccess Rules', 'vs-relink' ); ?></a>
+			<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'edit.php?post_type=vs_relink&page=vs-relink-tools&vs_relink_download_htaccess=1' ), 'vs_relink_download_htaccess' ) ); ?>" class="button button-secondary"><?php esc_html_e( 'Download .htaccess Rules', 'vs-relink' ); ?></a>
 		</div>
 
 		<div class="card" style="grid-column: 1 / -1;">

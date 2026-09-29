@@ -3,7 +3,7 @@
  * Plugin Name:       VS ReLink
  * Plugin URI:        https://github.com/bekreative/vs-relink
  * Description:       Lightweight link redirection and deep tracking plugin.
- * Version:           2.0.1
+ * Version:           2.1.0
  * Requires at least: 6.0
  * Requires PHP:      8.1
  * Author:            WPSuli
@@ -24,7 +24,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'VS_RELINK_VERSION', '2.0.1' );
+define( 'VS_RELINK_VERSION', '2.1.0' );
 define( 'VS_RELINK_FILE', __FILE__ );
 define( 'VS_RELINK_PATH', plugin_dir_path( __FILE__ ) );
 define( 'VS_RELINK_URL', plugin_dir_url( __FILE__ ) );
@@ -71,7 +71,7 @@ function vs_relink(): Plugin {
 	return $instance;
 }
 
-register_activation_hook( __FILE__, [ Database\Schema::class, 'activate' ] );
+register_activation_hook( __FILE__, array( Database\Schema::class, 'activate' ) );
 
 register_deactivation_hook(
 	__FILE__,

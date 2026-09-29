@@ -24,10 +24,10 @@ final class CLI {
 			return;
 		}
 
-		WP_CLI::add_command( 'relink check', [ self::class, 'health_check' ] );
-		WP_CLI::add_command( 'relink stats', [ self::class, 'show_stats' ] );
-		WP_CLI::add_command( 'relink create', [ self::class, 'create_link' ] );
-		WP_CLI::add_command( 'relink migrate', [ self::class, 'migrate_legacy' ] );
+		WP_CLI::add_command( 'relink check', array( self::class, 'health_check' ) );
+		WP_CLI::add_command( 'relink stats', array( self::class, 'show_stats' ) );
+		WP_CLI::add_command( 'relink create', array( self::class, 'create_link' ) );
+		WP_CLI::add_command( 'relink migrate', array( self::class, 'migrate_legacy' ) );
 	}
 
 	/**
@@ -78,24 +78,26 @@ final class CLI {
 	 * @param array $assoc_args Associative arguments.
 	 */
 	public static function health_check( $args, $assoc_args ): void {
-		$ids = LinkChecker::get_all_relink_ids();
+		unset( $args, $assoc_args );
+
+		$ids   = LinkChecker::get_all_relink_ids();
 		$count = count( $ids );
-		
+
 		WP_CLI::log( "Checking $count links..." );
-		
+
 		$success = 0;
-		$error = 0;
-		
+		$error   = 0;
+
 		foreach ( $ids as $id ) {
 			$result = LinkChecker::check_link( $id );
-			if ( $result['status'] === 200 ) {
-				$success++;
+			if ( 200 === $result['status'] ) {
+				++$success;
 			} else {
-				$error++;
+				++$error;
 				WP_CLI::warning( "Link #$id [{$result['post_title']}]: Status {$result['status']}" );
 			}
 		}
-		
+
 		WP_CLI::success( "Check complete. $success healthy, $error issues found." );
 	}
 
@@ -110,13 +112,16 @@ final class CLI {
 	 * @param array $assoc_args Associative arguments.
 	 */
 	public static function show_stats( $args, $assoc_args ): void {
+		unset( $args, $assoc_args );
+
 		global $wpdb;
 		$table = Schema::get_clicks_table();
-		
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- clicks table name comes from Schema.
 		$total_clicks = $wpdb->get_var( "SELECT COUNT(*) FROM $table" );
 		$total_links  = wp_count_posts( 'vs_relink' )->publish;
-		
-		WP_CLI::line( "VS ReLink Overview:" );
+
+		WP_CLI::line( 'VS ReLink Overview:' );
 		WP_CLI::line( "- Total Links: $total_links" );
 		WP_CLI::line( "- Total Clicks: $total_clicks" );
 	}
@@ -154,17 +159,17 @@ final class CLI {
 	 */
 	public static function create_link( $args, $assoc_args ): void {
 		$url = $assoc_args['url'] ?? '';
-		if ( $url === '' ) {
+		if ( '' === $url ) {
 			WP_CLI::error( 'Missing --url argument.' );
 		}
 
-		$payload = [
+		$payload = array(
 			'original_url'  => $url,
 			'partner'       => $assoc_args['partner'] ?? '',
 			'short_slug'    => $assoc_args['slug'] ?? '',
 			'title'         => $assoc_args['title'] ?? '',
 			'redirect_type' => $assoc_args['redirect-type'] ?? '301',
-		];
+		);
 
 		if ( ! empty( $assoc_args['dry-run'] ) ) {
 			$preview = LinkFactory::preview( $payload );
@@ -177,6 +182,7 @@ final class CLI {
 			WP_CLI::line( 'Partner: ' . $preview['partner_name'] . ' (' . $preview['partner'] . ')' );
 			WP_CLI::line( 'Target URL: ' . $preview['target_url'] );
 			WP_CLI::line( 'Short slug: ' . $preview['short_slug'] );
+			WP_CLI::line( 'Redirect type: ' . $preview['redirect_type'] );
 			if ( $preview['existed'] ) {
 				WP_CLI::warning( 'Link already exists (ID: ' . $preview['link_id'] . ').' );
 			}

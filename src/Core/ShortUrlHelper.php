@@ -49,14 +49,14 @@ final class ShortUrlHelper {
 	public static function update_from_path_suffix( int $post_id, string $path_suffix ) {
 		$path_suffix = trim( sanitize_text_field( $path_suffix ), '/' );
 
-		if ( $path_suffix === '' ) {
+		if ( '' === $path_suffix ) {
 			return new \WP_Error( 'empty_path', __( 'Short URL path cannot be empty.', 'vs-relink' ) );
 		}
 
 		$parts     = array_values( array_filter( explode( '/', $path_suffix ) ) );
 		$leaf_slug = sanitize_title( (string) array_pop( $parts ) );
 
-		if ( $leaf_slug === '' ) {
+		if ( '' === $leaf_slug ) {
 			return new \WP_Error( 'invalid_slug', __( 'Invalid short URL slug.', 'vs-relink' ) );
 		}
 
@@ -76,11 +76,11 @@ final class ShortUrlHelper {
 		}
 
 		$result = wp_update_post(
-			[
+			array(
 				'ID'          => $post_id,
 				'post_name'   => $leaf_slug,
 				'post_parent' => $parent_id,
-			],
+			),
 			true
 		);
 

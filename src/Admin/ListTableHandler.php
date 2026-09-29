@@ -19,9 +19,9 @@ final class ListTableHandler {
 	 * Constructor.
 	 */
 	public function __construct() {
-		add_filter( 'manage_' . ReLink::POST_TYPE . '_posts_columns', [ $this, 'add_columns' ] );
-		add_action( 'manage_' . ReLink::POST_TYPE . '_posts_custom_column', [ $this, 'render_columns' ], 10, 2 );
-		add_filter( 'manage_edit-' . ReLink::POST_TYPE . '_sortable_columns', [ $this, 'sortable_columns' ] );
+		add_filter( 'manage_' . ReLink::POST_TYPE . '_posts_columns', array( $this, 'add_columns' ) );
+		add_action( 'manage_' . ReLink::POST_TYPE . '_posts_custom_column', array( $this, 'render_columns' ), 10, 2 );
+		add_filter( 'manage_edit-' . ReLink::POST_TYPE . '_sortable_columns', array( $this, 'sortable_columns' ) );
 	}
 
 	/**
@@ -31,12 +31,12 @@ final class ListTableHandler {
 	 * @return array
 	 */
 	public function add_columns( array $columns ): array {
-		$new_columns = [];
+		$new_columns = array();
 		foreach ( $columns as $key => $value ) {
 			$new_columns[ $key ] = $value;
-			if ( $key === 'title' ) {
-				$new_columns['short_url'] = __( 'Short URL', 'vs-relink' );
-				$new_columns['partner'] = __( 'Partner', 'vs-relink' );
+			if ( 'title' === $key ) {
+				$new_columns['short_url']  = __( 'Short URL', 'vs-relink' );
+				$new_columns['partner']    = __( 'Partner', 'vs-relink' );
 				$new_columns['target_url'] = __( 'Target URL', 'vs-relink' );
 			}
 		}
@@ -55,7 +55,7 @@ final class ListTableHandler {
 		switch ( $column ) {
 			case 'short_url':
 				$url = get_permalink( $post_id );
-				echo '<code>' . esc_html( str_replace( [ 'https://', 'http://' ], '', $url ) ) . '</code>';
+				echo '<code>' . esc_html( str_replace( array( 'https://', 'http://' ), '', $url ) ) . '</code>';
 				echo '<button type="button" class="button button-small vs-relink-copy" data-url="' . esc_url( $url ) . '" style="margin-left: 5px;"><span class="dashicons dashicons-admin-page" style="font-size: 14px; vertical-align: middle; margin-top: -2px;"></span></button>';
 				break;
 

@@ -24,6 +24,7 @@ final class StatsRepository {
 		$table = Schema::get_clicks_table();
 		$where = $link_id ? $wpdb->prepare( 'WHERE link_id = %d', $link_id ) : '';
 
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is Schema::get_clicks_table(); $where is prepared or empty.
 		return (int) $wpdb->get_var( "SELECT COUNT(*) FROM $table $where" );
 	}
 
@@ -36,6 +37,7 @@ final class StatsRepository {
 		$table = Schema::get_clicks_table();
 		$where = self::build_click_where( $days, $link_id, $group_id );
 
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is Schema::get_clicks_table(); $where is a prepared clause.
 		return (int) $wpdb->get_var( "SELECT COUNT(*) FROM $table c $where" );
 	}
 
@@ -45,10 +47,11 @@ final class StatsRepository {
 	public static function get_unique_visitors( int $days, ?int $link_id = null, ?int $group_id = null ): int {
 		global $wpdb;
 
-		$table = Schema::get_clicks_table();
-		$where = self::build_click_where( $days, $link_id, $group_id );
+		$table  = Schema::get_clicks_table();
+		$where  = self::build_click_where( $days, $link_id, $group_id );
 		$where .= " AND c.ip_address != ''";
 
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is Schema::get_clicks_table(); $where is a prepared clause.
 		return (int) $wpdb->get_var( "SELECT COUNT(DISTINCT c.ip_address) FROM $table c $where" );
 	}
 
@@ -61,6 +64,7 @@ final class StatsRepository {
 		$table = Schema::get_clicks_table();
 		$where = self::build_click_where( $days, null, $group_id );
 
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is Schema::get_clicks_table(); $where is a prepared clause.
 		return (int) $wpdb->get_var( "SELECT COUNT(DISTINCT c.link_id) FROM $table c $where" );
 	}
 
@@ -87,14 +91,19 @@ final class StatsRepository {
 		$table = Schema::get_clicks_table();
 		$posts = $wpdb->posts;
 
-		return $wpdb->get_results( $wpdb->prepare(
-			"SELECT c.*, p.post_title 
-			 FROM $table c 
-			 JOIN $posts p ON c.link_id = p.ID 
-			 ORDER BY c.timestamp DESC 
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table and $posts are internal identifiers; LIMIT is a placeholder.
+		return $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT c.*, p.post_title
+			 FROM $table c
+			 JOIN $posts p ON c.link_id = p.ID
+			 ORDER BY c.timestamp DESC
 			 LIMIT %d",
-			$limit
-		), ARRAY_A );
+				$limit
+			),
+			ARRAY_A
+		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 	}
 
 	/**
@@ -108,15 +117,20 @@ final class StatsRepository {
 		$table = Schema::get_clicks_table();
 		$posts = $wpdb->posts;
 
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table and $posts are internal identifiers; post type is a placeholder.
 		return $wpdb->get_results(
-			"SELECT p.ID, p.post_title, COUNT(c.id) as click_count 
-			 FROM $posts p 
-			 LEFT JOIN $table c ON p.ID = c.link_id 
-			 WHERE p.post_type = 'vs_relink' AND p.post_status = 'publish' 
-			 GROUP BY p.ID 
+			$wpdb->prepare(
+				"SELECT p.ID, p.post_title, COUNT(c.id) as click_count
+			 FROM $posts p
+			 LEFT JOIN $table c ON p.ID = c.link_id
+			 WHERE p.post_type = %s AND p.post_status = 'publish'
+			 GROUP BY p.ID
 			 ORDER BY click_count DESC",
+				ReLink::POST_TYPE
+			),
 			ARRAY_A
 		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 	}
 
 	/**
@@ -133,14 +147,16 @@ final class StatsRepository {
 		$table = Schema::get_clicks_table();
 		$where = self::build_click_where( $days, $link_id, $group_id );
 
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is Schema::get_clicks_table(); $where is a prepared clause.
 		return $wpdb->get_results(
-			"SELECT DATE(c.timestamp) as date, COUNT(*) as count 
-			 FROM $table c 
+			"SELECT DATE(c.timestamp) as date, COUNT(*) as count
+			 FROM $table c
 			 $where
 			 GROUP BY DATE(c.timestamp)
 			 ORDER BY date ASC",
 			ARRAY_A
 		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 	}
 
 	/**
@@ -153,17 +169,22 @@ final class StatsRepository {
 		$posts = $wpdb->posts;
 		$where = self::build_click_where( $days, null, $group_id );
 
-		return $wpdb->get_results( $wpdb->prepare(
-			"SELECT p.ID, p.post_title, COUNT(c.id) as click_count 
-			 FROM $posts p 
-			 JOIN $table c ON p.ID = c.link_id 
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- identifiers and the prepared WHERE clause; values use placeholders.
+		return $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT p.ID, p.post_title, COUNT(c.id) as click_count
+			 FROM $posts p
+			 JOIN $table c ON p.ID = c.link_id
 			 $where AND p.post_type = %s AND p.post_status = 'publish'
-			 GROUP BY p.ID 
-			 ORDER BY click_count DESC 
+			 GROUP BY p.ID
+			 ORDER BY click_count DESC
 			 LIMIT %d",
-			ReLink::POST_TYPE,
-			$limit
-		), ARRAY_A );
+				ReLink::POST_TYPE,
+				$limit
+			),
+			ARRAY_A
+		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 	}
 
 	/**
@@ -201,6 +222,7 @@ final class StatsRepository {
 			);
 		}
 
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- fragments are already prepared; only LIMIT/OFFSET remain.
 		$sql = "
 			SELECT p.ID, p.post_title,
 			       SUM(CASE WHEN $period_sql THEN 1 ELSE 0 END) as click_count,
@@ -214,6 +236,7 @@ final class StatsRepository {
 		";
 
 		return $wpdb->get_results( $wpdb->prepare( $sql, $limit, $offset ), ARRAY_A );
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
 	}
 
 	/**
@@ -222,7 +245,7 @@ final class StatsRepository {
 	private static function build_click_where( int $days, ?int $link_id, ?int $group_id ): string {
 		global $wpdb;
 
-		$clauses = [ $wpdb->prepare( 'c.timestamp >= DATE_SUB(NOW(), INTERVAL %d DAY)', $days ) ];
+		$clauses = array( $wpdb->prepare( 'c.timestamp >= DATE_SUB(NOW(), INTERVAL %d DAY)', $days ) );
 
 		if ( $link_id ) {
 			$clauses[] = $wpdb->prepare( 'c.link_id = %d', $link_id );

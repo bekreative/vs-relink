@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Vs\ReLink\Admin;
 
+use Vs\ReLink\Core\Capabilities;
 use Vs\ReLink\PostTypes\ReLink;
 use Vs\ReLink\Taxonomies\LinkGroup;
 use Vs\ReLink\Taxonomies\Partner;
@@ -17,8 +18,8 @@ final class AdminLayout {
 	 * Register hooks for list table and body class.
 	 */
 	public static function register(): void {
-		add_action( 'admin_notices', [ self::class, 'render_list_header' ], 1 );
-		add_filter( 'admin_body_class', [ self::class, 'admin_body_class' ] );
+		add_action( 'admin_notices', array( self::class, 'render_list_header' ), 1 );
+		add_filter( 'admin_body_class', array( self::class, 'admin_body_class' ) );
 	}
 
 	/**
@@ -46,52 +47,59 @@ final class AdminLayout {
 		return ReLink::POST_TYPE === $screen->post_type
 			|| str_starts_with( $screen->id, 'vs_relink' )
 			|| str_starts_with( $screen->id, 'edit-vs_relink' )
-			|| in_array( $screen->taxonomy, [ Partner::TAXONOMY, LinkGroup::TAXONOMY ], true );
+			|| in_array( $screen->taxonomy, array( Partner::TAXONOMY, LinkGroup::TAXONOMY ), true );
 	}
 
 	/**
 	 * Navigation items.
 	 *
-	 * @return array<string, array{label: string, url: string, icon: string}>
+	 * @return array<string, array{label: string, url: string, icon: string, cap: string}>
 	 */
 	public static function get_nav_items(): array {
-		return [
-			'links'    => [
+		return array(
+			'links'    => array(
 				'label' => __( 'All Links', 'vs-relink' ),
 				'url'   => admin_url( 'edit.php?post_type=' . ReLink::POST_TYPE ),
 				'icon'  => 'dashicons-list-view',
-			],
-			'add'      => [
+				'cap'   => 'edit_relinks',
+			),
+			'add'      => array(
 				'label' => __( 'Add Link', 'vs-relink' ),
 				'url'   => admin_url( 'admin.php?page=vs-relink-edit' ),
 				'icon'  => 'dashicons-plus-alt',
-			],
-			'partners' => [
+				'cap'   => 'edit_relinks',
+			),
+			'partners' => array(
 				'label' => __( 'Partners', 'vs-relink' ),
 				'url'   => admin_url( 'edit-tags.php?taxonomy=' . Partner::TAXONOMY . '&post_type=' . ReLink::POST_TYPE ),
 				'icon'  => 'dashicons-groups',
-			],
-			'groups'   => [
+				'cap'   => Capabilities::MANAGE_PARTNERS,
+			),
+			'groups'   => array(
 				'label' => __( 'Groups', 'vs-relink' ),
 				'url'   => admin_url( 'edit-tags.php?taxonomy=' . LinkGroup::TAXONOMY . '&post_type=' . ReLink::POST_TYPE ),
 				'icon'  => 'dashicons-category',
-			],
-			'reports'  => [
+				'cap'   => 'edit_relinks',
+			),
+			'reports'  => array(
 				'label' => __( 'Reports', 'vs-relink' ),
 				'url'   => admin_url( 'edit.php?post_type=' . ReLink::POST_TYPE . '&page=vs-relink-reports' ),
 				'icon'  => 'dashicons-chart-bar',
-			],
-			'tools'    => [
+				'cap'   => 'manage_options',
+			),
+			'tools'    => array(
 				'label' => __( 'Tools', 'vs-relink' ),
 				'url'   => admin_url( 'edit.php?post_type=' . ReLink::POST_TYPE . '&page=vs-relink-tools' ),
 				'icon'  => 'dashicons-admin-tools',
-			],
-			'settings' => [
+				'cap'   => 'manage_options',
+			),
+			'settings' => array(
 				'label' => __( 'Settings', 'vs-relink' ),
 				'url'   => admin_url( 'edit.php?post_type=' . ReLink::POST_TYPE . '&page=vs-relink-settings' ),
 				'icon'  => 'dashicons-admin-generic',
-			],
-		];
+				'cap'   => 'manage_options',
+			),
+		);
 	}
 
 	/**
@@ -134,7 +142,7 @@ final class AdminLayout {
 	 * @param string $active Active nav key.
 	 */
 	public static function render( string $active = '' ): void {
-		if ( $active === '' ) {
+		if ( '' === $active ) {
 			$active = self::detect_active_nav();
 		}
 
@@ -152,6 +160,10 @@ final class AdminLayout {
 				<nav class="lwr-admin-nav" aria-label="<?php esc_attr_e( 'ReLink navigation', 'vs-relink' ); ?>">
 					<ul>
 						<?php foreach ( $items as $key => $item ) : ?>
+							<?php
+							if ( ! current_user_can( $item['cap'] ) ) {
+								continue; }
+							?>
 							<li class="<?php echo $active === $key ? 'is-active' : ''; ?>">
 								<a href="<?php echo esc_url( $item['url'] ); ?>">
 									<span class="dashicons <?php echo esc_attr( $item['icon'] ); ?>" aria-hidden="true"></span>
@@ -196,7 +208,7 @@ final class AdminLayout {
 			return;
 		}
 
-		if ( in_array( $screen->taxonomy, [ Partner::TAXONOMY, LinkGroup::TAXONOMY ], true ) && 'edit-tags' === $screen->base ) {
+		if ( in_array( $screen->taxonomy, array( Partner::TAXONOMY, LinkGroup::TAXONOMY ), true ) && 'edit-tags' === $screen->base ) {
 			$active = Partner::TAXONOMY === $screen->taxonomy ? 'partners' : 'groups';
 			echo '<div class="lwr-list-shell">';
 			self::render( $active );
@@ -214,7 +226,7 @@ final class AdminLayout {
 		}
 
 		$is_list = 'edit-' . ReLink::POST_TYPE === $screen->id;
-		$is_tax  = in_array( $screen->taxonomy, [ Partner::TAXONOMY, LinkGroup::TAXONOMY ], true ) && 'edit-tags' === $screen->base;
+		$is_tax  = in_array( $screen->taxonomy, array( Partner::TAXONOMY, LinkGroup::TAXONOMY ), true ) && 'edit-tags' === $screen->base;
 
 		if ( ! $is_list && ! $is_tax ) {
 			return;
@@ -234,7 +246,7 @@ final class AdminLayout {
 	public static function section_title( string $title, string $description = '' ): void {
 		echo '<div class="lwr-section-head">';
 		echo '<h2>' . esc_html( $title ) . '</h2>';
-		if ( $description !== '' ) {
+		if ( '' !== $description ) {
 			echo '<p>' . esc_html( $description ) . '</p>';
 		}
 		echo '</div>';

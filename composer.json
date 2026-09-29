@@ -1,7 +1,7 @@
 {
   "name": "verysimple/vs-relink",
   "description": "Very Simple link redirection and tracking for WordPress.",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "type": "wordpress-plugin",
   "license": "GPL-2.0-or-later",
   "authors": [
@@ -33,8 +33,8 @@
     "sort-packages": true
   },
   "scripts": {
-    "phpcs": "phpcs",
-    "phpcbf": "phpcbf",
+    "phpcs": "phpcs --standard=phpcs.xml.dist",
+    "phpcbf": "phpcbf --standard=phpcs.xml.dist",
     "package": "bash bin/package.sh"
   }
 }

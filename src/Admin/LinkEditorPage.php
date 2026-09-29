@@ -17,13 +17,13 @@ final class LinkEditorPage {
 	 * Register hooks.
 	 */
 	public static function register(): void {
-		add_action( 'admin_menu', [ self::class, 'register_page' ] );
-		add_action( 'admin_post_vs_relink_save_link', [ self::class, 'handle_save' ] );
-		add_action( 'load-post-new.php', [ self::class, 'redirect_new_post' ] );
-		add_action( 'load-post.php', [ self::class, 'redirect_edit_post' ] );
-		add_filter( 'get_edit_post_link', [ self::class, 'filter_edit_link' ], 10, 3 );
-		add_filter( 'use_block_editor_for_post_type', [ self::class, 'disable_block_editor' ], 10, 2 );
-		add_filter( 'post_row_actions', [ self::class, 'row_actions' ], 10, 2 );
+		add_action( 'admin_menu', array( self::class, 'register_page' ) );
+		add_action( 'admin_post_vs_relink_save_link', array( self::class, 'handle_save' ) );
+		add_action( 'load-post-new.php', array( self::class, 'redirect_new_post' ) );
+		add_action( 'load-post.php', array( self::class, 'redirect_edit_post' ) );
+		add_filter( 'get_edit_post_link', array( self::class, 'filter_edit_link' ), 10, 3 );
+		add_filter( 'use_block_editor_for_post_type', array( self::class, 'disable_block_editor' ), 10, 2 );
+		add_filter( 'post_row_actions', array( self::class, 'row_actions' ), 10, 2 );
 	}
 
 	/**
@@ -34,13 +34,13 @@ final class LinkEditorPage {
 			'',
 			__( 'Edit ReLink', 'vs-relink' ),
 			__( 'Edit ReLink', 'vs-relink' ),
-			'edit_posts',
+			'edit_relinks',
 			self::PAGE_SLUG,
-			[ self::class, 'render_page' ]
+			array( self::class, 'render_page' )
 		);
 
-		if ( is_string( $hook ) && $hook !== '' ) {
-			add_action( 'load-' . $hook, [ self::class, 'maybe_create_and_redirect' ] );
+		if ( is_string( $hook ) && '' !== $hook ) {
+			add_action( 'load-' . $hook, array( self::class, 'maybe_create_and_redirect' ) );
 		}
 	}
 
@@ -48,6 +48,7 @@ final class LinkEditorPage {
 	 * Create auto-draft and redirect before admin headers (Add Link / no link_id).
 	 */
 	public static function maybe_create_and_redirect(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- admin screen route, same pattern as core post.php. Capability is enforced by the submenu.
 		$link_id = isset( $_GET['link_id'] ) ? (int) $_GET['link_id'] : 0;
 		if ( $link_id > 0 ) {
 			return;
@@ -67,11 +68,11 @@ final class LinkEditorPage {
 	 */
 	private static function create_auto_draft() {
 		return wp_insert_post(
-			[
+			array(
 				'post_type'   => ReLink::POST_TYPE,
 				'post_status' => 'auto-draft',
 				'post_title'  => '',
-			],
+			),
 			true
 		);
 	}
@@ -79,21 +80,22 @@ final class LinkEditorPage {
 	/**
 	 * Disable Gutenberg for ReLinks.
 	 *
-	 * @param bool   $use       Whether to use block editor.
-	 * @param string $post_type Post type.
+	 * @param bool   $use_block_editor Whether to use the block editor.
+	 * @param string $post_type        Post type.
 	 */
-	public static function disable_block_editor( bool $use, string $post_type ): bool {
+	public static function disable_block_editor( bool $use_block_editor, string $post_type ): bool {
 		if ( ReLink::POST_TYPE === $post_type ) {
 			return false;
 		}
 
-		return $use;
+		return $use_block_editor;
 	}
 
 	/**
 	 * Redirect post-new.php to custom editor.
 	 */
 	public static function redirect_new_post(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- core post-new.php query arg used only to decide whether to redirect.
 		if ( ( $_GET['post_type'] ?? '' ) !== ReLink::POST_TYPE ) {
 			return;
 		}
@@ -111,6 +113,7 @@ final class LinkEditorPage {
 	 * Redirect post.php to custom editor.
 	 */
 	public static function redirect_edit_post(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- core post.php query arg used only to redirect the editor.
 		$post_id = isset( $_GET['post'] ) ? (int) $_GET['post'] : 0;
 		if ( $post_id <= 0 || get_post_type( $post_id ) !== ReLink::POST_TYPE ) {
 			return;
@@ -128,7 +131,7 @@ final class LinkEditorPage {
 	 * @param string  $context Link context.
 	 */
 	public static function filter_edit_link( string $link, int $post_id, string $context ): string {
-		if ( get_post_type( $post_id ) === ReLink::POST_TYPE && $context === 'display' ) {
+		if ( get_post_type( $post_id ) === ReLink::POST_TYPE && 'display' === $context ) {
 			return self::editor_url( $post_id );
 		}
 
@@ -143,7 +146,7 @@ final class LinkEditorPage {
 	 * @return array<string, string>
 	 */
 	public static function row_actions( array $actions, $post ): array {
-		if ( $post->post_type !== ReLink::POST_TYPE ) {
+		if ( ReLink::POST_TYPE !== $post->post_type ) {
 			return $actions;
 		}
 
@@ -181,6 +184,7 @@ final class LinkEditorPage {
 	 * Render editor page.
 	 */
 	public static function render_page(): void {
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only editor routing; the save handler verifies its own nonce.
 		$link_id = isset( $_GET['link_id'] ) ? (int) $_GET['link_id'] : 0;
 
 		if ( $link_id <= 0 ) {
@@ -188,7 +192,7 @@ final class LinkEditorPage {
 		}
 
 		$post = get_post( $link_id );
-		if ( ! $post || $post->post_type !== ReLink::POST_TYPE ) {
+		if ( ! $post || ReLink::POST_TYPE !== $post->post_type ) {
 			wp_die( esc_html__( 'Link not found.', 'vs-relink' ) );
 		}
 
@@ -196,7 +200,8 @@ final class LinkEditorPage {
 			wp_die( esc_html__( 'You cannot edit this link.', 'vs-relink' ) );
 		}
 
-		$saved = isset( $_GET['saved'] ) && $_GET['saved'] === '1';
+		$saved = isset( $_GET['saved'] ) && '1' === $_GET['saved'];
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 		require VS_RELINK_PATH . 'src/Admin/Views/link-editor-view.php';
 	}
 
@@ -217,11 +222,11 @@ final class LinkEditorPage {
 		}
 
 		$redirect = add_query_arg(
-			[
+			array(
 				'page'    => self::PAGE_SLUG,
 				'link_id' => $post_id,
 				'saved'   => '1',
-			],
+			),
 			admin_url( 'admin.php' )
 		);
 

@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+<ruleset name="VS ReLink">
+	<description>WordPress Coding Standards for the VS ReLink plugin.</description>
+
+	<file>vs-relink.php</file>
+	<file>src</file>
+	<file>tests</file>
+
+	<exclude-pattern>*/vendor/*</exclude-pattern>
+	<exclude-pattern>*/node_modules/*</exclude-pattern>
+
+	<arg value="ps"/>
+	<arg name="basepath" value="."/>
+	<arg name="colors"/>
+	<arg name="extensions" value="php"/>
+	<arg name="parallel" value="8"/>
+
+	<config name="testVersion" value="8.1-"/>
+	<config name="minimum_supported_wp_version" value="6.0"/>
+
+	<!--
+		Class files use PSR-4 names (Capabilities.php) because Composer autoloads Vs\ReLink\ from src/.
+		WPCS class-*.php filenames would break that autoload map.
+	-->
+	<rule ref="WordPress-Extra">
+		<exclude name="WordPress.Files.FileName.InvalidClassFileName"/>
+		<exclude name="WordPress.Files.FileName.NotHyphenatedLowercase"/>
+	</rule>
+	<rule ref="PHPCompatibilityWP"/>
+
+	<rule ref="WordPress.WP.I18n">
+		<properties>
+			<property name="text_domain" type="array">
+				<element value="vs-relink"/>
+			</property>
+		</properties>
+	</rule>
+
+	<rule ref="WordPress.WP.Capabilities">
+		<properties>
+			<property name="custom_capabilities" type="array">
+				<element value="edit_relinks"/>
+				<element value="edit_others_relinks"/>
+				<element value="edit_published_relinks"/>
+				<element value="edit_private_relinks"/>
+				<element value="publish_relinks"/>
+				<element value="delete_relinks"/>
+				<element value="delete_others_relinks"/>
+				<element value="delete_published_relinks"/>
+				<element value="delete_private_relinks"/>
+				<element value="read_private_relinks"/>
+				<element value="manage_relink"/>
+				<element value="manage_relink_partners"/>
+			</property>
+		</properties>
+	</rule>
+</ruleset>

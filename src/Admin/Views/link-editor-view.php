@@ -19,26 +19,27 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 $original_url    = get_post_meta( $post->ID, '_vs_relink_original_url', true );
 $target_url      = get_post_meta( $post->ID, '_vs_relink_target_url', true );
-$redirect_type   = get_post_meta( $post->ID, '_vs_relink_type', true ) ?: '301';
+$stored_redirect = get_post_meta( $post->ID, '_vs_relink_type', true );
+$redirect_type   = $stored_redirect ? $stored_redirect : '301';
 $is_nofollow     = get_post_meta( $post->ID, '_vs_relink_nofollow', true ) === 'yes';
 $is_sponsored    = get_post_meta( $post->ID, '_vs_relink_sponsored', true ) === 'yes';
 $forward_params  = get_post_meta( $post->ID, '_vs_relink_forward_params', true ) === 'yes';
 $enable_tracking = get_post_meta( $post->ID, '_vs_relink_tracking', true ) !== 'no';
 $keywords        = get_post_meta( $post->ID, '_vs_relink_keywords', true );
-$short_path      = $post->post_status === 'auto-draft' ? '' : ShortUrlHelper::get_path_suffix( $post->ID );
-$full_short_url  = $post->post_status === 'auto-draft' ? '' : ShortUrlHelper::get_full_url( $post->ID );
+$short_path      = 'auto-draft' === $post->post_status ? '' : ShortUrlHelper::get_path_suffix( $post->ID );
+$full_short_url  = 'auto-draft' === $post->post_status ? '' : ShortUrlHelper::get_full_url( $post->ID );
 
-$partner_terms = get_terms(
-	[
+$partner_terms    = get_terms(
+	array(
 		'taxonomy'   => Partner::TAXONOMY,
 		'hide_empty' => false,
-	]
+	)
 );
-$assigned_partner = wp_get_object_terms( $post->ID, Partner::TAXONOMY, [ 'fields' => 'ids' ] );
+$assigned_partner = wp_get_object_terms( $post->ID, Partner::TAXONOMY, array( 'fields' => 'ids' ) );
 $selected_partner = ( ! is_wp_error( $assigned_partner ) && ! empty( $assigned_partner ) ) ? (int) $assigned_partner[0] : 0;
-$is_partner_mode  = $selected_partner > 0 || (string) $original_url !== '';
+$is_partner_mode  = $selected_partner > 0 || '' !== (string) $original_url;
 
-$is_new = $post->post_status === 'auto-draft' && $post->post_title === '';
+$is_new = 'auto-draft' === $post->post_status && '' === $post->post_title;
 ?>
 <div class="wrap lwr-admin-wrap">
 	<?php AdminLayout::render( 'add' ); ?>
@@ -106,14 +107,14 @@ $is_new = $post->post_status === 'auto-draft' && $post->post_title === '';
 					<select name="vs_relink_partner" id="vs_relink_partner">
 						<option value=""><?php esc_html_e( '— None (manual target) —', 'vs-relink' ); ?></option>
 						<?php if ( ! is_wp_error( $partner_terms ) ) : ?>
-							<?php foreach ( $partner_terms as $term ) : ?>
+							<?php foreach ( $partner_terms as $partner_term ) : ?>
 								<option
-									value="<?php echo esc_attr( (string) $term->term_id ); ?>"
-									data-suffix="<?php echo esc_attr( (string) get_term_meta( $term->term_id, Partner::META_URL_SUFFIX, true ) ); ?>"
-									data-domains="<?php echo esc_attr( (string) get_term_meta( $term->term_id, Partner::META_DOMAINS, true ) ); ?>"
-									<?php selected( $selected_partner, (int) $term->term_id ); ?>
+									value="<?php echo esc_attr( (string) $partner_term->term_id ); ?>"
+									data-suffix="<?php echo esc_attr( (string) get_term_meta( $partner_term->term_id, Partner::META_URL_SUFFIX, true ) ); ?>"
+									data-domains="<?php echo esc_attr( (string) get_term_meta( $partner_term->term_id, Partner::META_DOMAINS, true ) ); ?>"
+									<?php selected( $selected_partner, (int) $partner_term->term_id ); ?>
 								>
-									<?php echo esc_html( $term->name ); ?>
+									<?php echo esc_html( $partner_term->name ); ?>
 								</option>
 							<?php endforeach; ?>
 						<?php endif; ?>

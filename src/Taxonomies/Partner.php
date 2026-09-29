@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Vs\ReLink\Taxonomies;
 
+use Vs\ReLink\Core\Capabilities;
+
 /**
  * Partner taxonomy for affiliate URL suffix configuration.
  */
@@ -28,29 +30,35 @@ final class Partner {
 	 * Register the taxonomy.
 	 */
 	public static function register(): void {
-		$labels = [
-			'name'              => _x( 'Partners', 'taxonomy general name', 'vs-relink' ),
-			'singular_name'     => _x( 'Partner', 'taxonomy singular name', 'vs-relink' ),
-			'search_items'      => __( 'Search Partners', 'vs-relink' ),
-			'all_items'         => __( 'All Partners', 'vs-relink' ),
-			'edit_item'         => __( 'Edit Partner', 'vs-relink' ),
-			'update_item'       => __( 'Update Partner', 'vs-relink' ),
-			'add_new_item'      => __( 'Add New Partner', 'vs-relink' ),
-			'new_item_name'     => __( 'New Partner Name', 'vs-relink' ),
-			'menu_name'         => __( 'Partners', 'vs-relink' ),
-		];
+		$labels = array(
+			'name'          => _x( 'Partners', 'taxonomy general name', 'vs-relink' ),
+			'singular_name' => _x( 'Partner', 'taxonomy singular name', 'vs-relink' ),
+			'search_items'  => __( 'Search Partners', 'vs-relink' ),
+			'all_items'     => __( 'All Partners', 'vs-relink' ),
+			'edit_item'     => __( 'Edit Partner', 'vs-relink' ),
+			'update_item'   => __( 'Update Partner', 'vs-relink' ),
+			'add_new_item'  => __( 'Add New Partner', 'vs-relink' ),
+			'new_item_name' => __( 'New Partner Name', 'vs-relink' ),
+			'menu_name'     => __( 'Partners', 'vs-relink' ),
+		);
 
-		$args = [
+		$args = array(
 			'hierarchical'      => false,
 			'labels'            => $labels,
 			'show_ui'           => true,
 			'show_admin_column' => false,
 			'query_var'         => true,
 			'rewrite'           => false,
-			'show_in_rest'      => true,
-		];
+			'show_in_rest'      => false,
+			'capabilities'      => array(
+				'manage_terms' => Capabilities::MANAGE_PARTNERS,
+				'edit_terms'   => Capabilities::MANAGE_PARTNERS,
+				'delete_terms' => Capabilities::MANAGE_PARTNERS,
+				'assign_terms' => 'edit_relinks',
+			),
+		);
 
-		register_taxonomy( self::TAXONOMY, [ \Vs\ReLink\PostTypes\ReLink::POST_TYPE ], $args );
+		register_taxonomy( self::TAXONOMY, array( \Vs\ReLink\PostTypes\ReLink::POST_TYPE ), $args );
 	}
 
 	/**
@@ -60,25 +68,25 @@ final class Partner {
 	 */
 	public static function get_all_with_meta(): array {
 		$terms = get_terms(
-			[
+			array(
 				'taxonomy'   => self::TAXONOMY,
 				'hide_empty' => false,
-			]
+			)
 		);
 
 		if ( is_wp_error( $terms ) || ! is_array( $terms ) ) {
-			return [];
+			return array();
 		}
 
-		$partners = [];
+		$partners = array();
 		foreach ( $terms as $term ) {
-			$partners[] = [
+			$partners[] = array(
 				'term_id'    => (int) $term->term_id,
 				'name'       => $term->name,
 				'slug'       => $term->slug,
 				'domains'    => (string) get_term_meta( $term->term_id, self::META_DOMAINS, true ),
 				'url_suffix' => (string) get_term_meta( $term->term_id, self::META_URL_SUFFIX, true ),
-			];
+			);
 		}
 
 		return $partners;
@@ -103,12 +111,15 @@ final class Partner {
 	 * @return string[]
 	 */
 	public static function parse_domains( string $domains_raw ): array {
-		$parts = preg_split( '/[\s,]+/', strtolower( trim( $domains_raw ) ) ) ?: [];
-		$hosts = [];
+		$parts = preg_split( '/[\s,]+/', strtolower( trim( $domains_raw ) ) );
+		if ( ! is_array( $parts ) ) {
+			$parts = array();
+		}
+		$hosts = array();
 
 		foreach ( $parts as $part ) {
 			$part = trim( $part );
-			if ( $part === '' ) {
+			if ( '' === $part ) {
 				continue;
 			}
 			$hosts[] = self::normalize_host( $part );

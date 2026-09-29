@@ -22,7 +22,7 @@ final class ReLink {
 	 * @return void
 	 */
 	public static function register(): void {
-		$labels = [
+		$labels = array(
 			'name'               => _x( 'ReLinks', 'post type general name', 'vs-relink' ),
 			'singular_name'      => _x( 'ReLink', 'post type singular name', 'vs-relink' ),
 			'menu_name'          => _x( 'ReLinks', 'admin menu', 'vs-relink' ),
@@ -36,30 +36,32 @@ final class ReLink {
 			'search_items'       => __( 'Search ReLinks', 'vs-relink' ),
 			'not_found'          => __( 'No relinks found.', 'vs-relink' ),
 			'not_found_in_trash' => __( 'No relinks found in Trash.', 'vs-relink' ),
-		];
+		);
 
-		$base = get_option( 'vs_relink_base', 're' ) ?: '';
+		$base = get_option( 'vs_relink_base', 're' );
+		$base = $base ? (string) $base : '';
 
-		$args = [
+		$args = array(
 			'labels'             => $labels,
 			'public'             => true,
 			'publicly_queryable' => true,
 			'show_ui'            => true,
 			'show_in_menu'       => true,
 			'query_var'          => true,
-			'rewrite'            => [ 
-				'slug'       => $base ?: ReLink::POST_TYPE, 
+			'rewrite'            => array(
+				'slug'       => $base ? $base : self::POST_TYPE,
 				'with_front' => false,
 				'feeds'      => false,
-			], 
-			'capability_type'    => 'post',
+			),
+			'capability_type'    => array( 'relink', 'relinks' ),
+			'map_meta_cap'       => true,
 			'has_archive'        => false,
 			'hierarchical'       => true,
 			'menu_position'      => 30,
 			'menu_icon'          => 'dashicons-admin-links',
-			'supports'           => [ 'title', 'page-attributes' ],
+			'supports'           => array( 'title', 'page-attributes' ),
 			'show_in_rest'       => false,
-		];
+		);
 
 		register_post_type( self::POST_TYPE, $args );
 	}

@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace Vs\ReLink\Core;
 
 use Vs\ReLink\PostTypes\ReLink;
-use Vs\ReLink\Database\Schema;
-use Vs\ReLink\Core\WebhookService;
 
 /**
  * Handles link redirection logic.
@@ -17,7 +15,7 @@ final class RedirectHandler {
 	 * Constructor.
 	 */
 	public function __construct() {
-		add_action( 'template_redirect', [ $this, 'handle_redirection' ], 5 );
+		add_action( 'template_redirect', array( $this, 'handle_redirection' ), 5 );
 	}
 
 	/**
@@ -26,115 +24,120 @@ final class RedirectHandler {
 	 * @return void
 	 */
 	public function handle_redirection(): void {
-		global $wp_query;
-
-		// If it's already identified as a ReLink, proceed.
 		if ( is_singular( ReLink::POST_TYPE ) ) {
 			$this->execute_redirection( get_queried_object_id() );
 			return;
 		}
 
-		// If it's a 404, check if the path matches a ReLink hierarchy.
-		if ( is_404() ) {
-			$path = trim( parse_url( $_SERVER['REQUEST_URI'], PHP_URL_PATH ), '/' );
-			
-			// Remove base if present
-			$base = get_option( 'vs_relink_base', 're' );
-			if ( $base && str_starts_with( $path, $base . '/' ) ) {
-				$path = substr( $path, strlen( $base ) + 1 );
-			}
+		if ( ! is_404() ) {
+			return;
+		}
 
-			$link = get_page_by_path( $path, OBJECT, ReLink::POST_TYPE );
-			if ( $link ) {
-				$this->execute_redirection( $link->ID );
-			}
+		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? (string) $_SERVER['REQUEST_URI'] : '';
+		$parsed_path = wp_parse_url( $request_uri, PHP_URL_PATH );
+		$path        = is_string( $parsed_path ) ? trim( $parsed_path, '/' ) : '';
+
+		$base = get_option( 'vs_relink_base', 're' );
+		if ( $base && str_starts_with( $path, $base . '/' ) ) {
+			$path = substr( $path, strlen( $base ) + 1 );
+		}
+
+		$link = get_page_by_path( $path, OBJECT, ReLink::POST_TYPE );
+		if ( $link ) {
+			$this->execute_redirection( (int) $link->ID );
 		}
 	}
 
 	/**
 	 * Execute the redirection for a specific ID.
-	 * 
-	 * @param int $link_id The ReLink post ID.
-	 * @return void
 	 */
 	private function execute_redirection( int $link_id ): void {
-		$target_url    = get_post_meta( $link_id, '_vs_relink_target_url', true );
-		$redirect_type = (int) get_post_meta( $link_id, '_vs_relink_type', true ) ?: 301;
-		$forward_params = get_post_meta( $link_id, '_vs_relink_forward_params', true ) === 'yes';
-		$enable_tracking = get_post_meta( $link_id, '_vs_relink_tracking', true ) !== 'no';
+		$target_url      = (string) get_post_meta( $link_id, '_vs_relink_target_url', true );
+		$stored_type     = get_post_meta( $link_id, '_vs_relink_type', true );
+		$redirect_type   = UrlGuard::redirect_code( $stored_type ? $stored_type : 301 );
+		$forward_params  = 'yes' === get_post_meta( $link_id, '_vs_relink_forward_params', true );
+		$enable_tracking = 'no' !== get_post_meta( $link_id, '_vs_relink_tracking', true );
 
-		if ( empty( $target_url ) ) {
+		if ( '' === $target_url || ! UrlGuard::is_http_url( $target_url ) ) {
 			return;
 		}
 
-		// Forward parameters if enabled.
+		// Public short links intentionally accept campaign query args. A nonce would break every published URL.
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended
 		if ( $forward_params && ! empty( $_GET ) ) {
-			$target_url = add_query_arg( $_GET, $target_url );
+			$target_url = ForwardParams::append( $target_url, wp_unslash( $_GET ) );
+		}
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+
+		if ( ! UrlGuard::is_http_url( $target_url ) ) {
+			return;
 		}
 
-		// Record the click.
 		if ( $enable_tracking ) {
 			$this->record_click( $link_id );
 		}
 
-		// Execute redirect correctly based on type.
+		// phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect -- affiliate targets are external; UrlGuard already requires http(s).
 		wp_redirect( $target_url, $redirect_type, 'LW-ReLink' );
 		exit;
 	}
 
 	/**
 	 * Record a click in the database.
-	 *
-	 * @param int $link_id The link post ID.
-	 * @return void
 	 */
 	private function record_click( int $link_id ): void {
 		global $wpdb;
 
-		$is_bot = $this->is_bot();
+		$is_bot       = $this->is_bot();
 		$exclude_bots = get_option( 'vs_relink_exclude_bots', '1' ) === '1';
 
 		if ( $is_bot && $exclude_bots ) {
-			return; // Skip bot if setting is active
+			return;
 		}
 
-		$ip      = $this->get_ip();
-		$referer = $_SERVER['HTTP_REFERER'] ?? '';
-		$ua      = $_SERVER['HTTP_USER_AGENT'] ?? '';
+		$ip = ClientIp::from_request();
+		if ( ! ClickThrottle::allow( $link_id, $ip ) ) {
+			return;
+		}
+
+		$referer = isset( $_SERVER['HTTP_REFERER'] ) ? esc_url_raw( (string) wp_unslash( $_SERVER['HTTP_REFERER'] ) ) : '';
+		$ua      = isset( $_SERVER['HTTP_USER_AGENT'] ) ? sanitize_text_field( (string) wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : '';
+		$referer = substr( $referer, 0, 500 );
+		$ua      = substr( $ua, 0, 500 );
 
 		$wpdb->insert(
-			Schema::get_clicks_table(),
-			[
+			\Vs\ReLink\Database\Schema::get_clicks_table(),
+			array(
 				'link_id'    => $link_id,
-				'ip_address' => $ip,
+				'ip_address' => substr( $ip, 0, 45 ),
 				'referer'    => $referer,
 				'user_agent' => $ua,
 				'is_bot'     => $is_bot ? 1 : 0,
-			],
-			[ '%d', '%s', '%s', '%s', '%d' ]
+			),
+			array( '%d', '%s', '%s', '%s', '%d' )
 		);
 
-		// Trigger Webhook
-		WebhookService::trigger( $link_id, [
-			'ip'      => $ip,
-			'referer' => $referer,
-			'ua'      => $ua,
-			'is_bot'  => $is_bot,
-		] );
+		WebhookService::trigger(
+			$link_id,
+			array(
+				'ip'      => $ip,
+				'referer' => $referer,
+				'ua'      => $ua,
+				'is_bot'  => $is_bot,
+			)
+		);
 	}
 
 	/**
 	 * Simple bot detection.
-	 *
-	 * @return bool
 	 */
 	private function is_bot(): bool {
-		$ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
-		if ( empty( $ua ) ) {
+		$ua = isset( $_SERVER['HTTP_USER_AGENT'] ) ? (string) $_SERVER['HTTP_USER_AGENT'] : '';
+		if ( '' === $ua ) {
 			return true;
 		}
 
-		$bots = [ 'bot', 'crawl', 'slurp', 'spider', 'mediapartners', 'chrome-lighthouse' ];
+		$bots = array( 'bot', 'crawl', 'slurp', 'spider', 'mediapartners', 'chrome-lighthouse' );
 		foreach ( $bots as $bot ) {
 			if ( stripos( $ua, $bot ) !== false ) {
 				return true;
@@ -142,20 +145,5 @@ final class RedirectHandler {
 		}
 
 		return false;
-	}
-
-	/**
-	 * Get the visitor's IP address.
-	 *
-	 * @return string
-	 */
-	private function get_ip(): string {
-		if ( ! empty( $_SERVER['HTTP_CLIENT_IP'] ) ) {
-			return $_SERVER['HTTP_CLIENT_IP'];
-		}
-		if ( ! empty( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) {
-			return $_SERVER['HTTP_X_FORWARDED_FOR'];
-		}
-		return $_SERVER['REMOTE_ADDR'] ?? '';
 	}
 }

@@ -18,11 +18,11 @@ final class ReportsHelper {
 	 * Build a filtered reports admin URL.
 	 */
 	public static function filter_url( ?int $link_id = null, ?int $group_id = null, int $days = 30 ): string {
-		$args = [
+		$args = array(
 			'post_type' => 'vs_relink',
 			'page'      => self::PAGE,
 			'days'      => max( 1, $days ),
-		];
+		);
 
 		if ( $link_id ) {
 			$args['link_id'] = $link_id;
