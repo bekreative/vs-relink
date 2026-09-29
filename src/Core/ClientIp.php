@@ -28,7 +28,7 @@ final class ClientIp {
 		$remote = self::normalize( $remote_addr );
 		$cidrs  = self::parse_list( implode( "\n", $cidrs ) );
 
-		if ( $remote === '' || $cidrs === [] || ! self::matches_any( $remote, $cidrs ) ) {
+		if ( '' === $remote || array() === $cidrs || ! self::matches_any( $remote, $cidrs ) ) {
 			return $remote;
 		}
 
@@ -37,7 +37,7 @@ final class ClientIp {
 
 		for ( $i = count( $hops ) - 1; $i >= 0; $i-- ) {
 			$candidate = self::normalize( $hops[ $i ] );
-			if ( $candidate === '' ) {
+			if ( '' === $candidate ) {
 				continue;
 			}
 			if ( ! self::matches_any( $candidate, $cidrs ) ) {
@@ -55,7 +55,7 @@ final class ClientIp {
 		$stored   = (string) get_option( 'vs_relink_trusted_proxies', '' );
 		$filtered = apply_filters( 'vs_relink_trusted_proxies', self::parse_list( $stored ) );
 		if ( ! is_array( $filtered ) ) {
-			return [];
+			return array();
 		}
 
 		return self::parse_list( implode( "\n", array_map( 'strval', $filtered ) ) );
@@ -72,12 +72,15 @@ final class ClientIp {
 	 * @return string[]
 	 */
 	public static function parse_list( string $raw ): array {
-		$tokens = preg_split( '/\s+/', strtolower( trim( $raw ) ) ) ?: [];
-		$valid  = [];
+		$tokens = preg_split( '/\s+/', strtolower( trim( $raw ) ) );
+		if ( ! is_array( $tokens ) ) {
+			$tokens = array();
+		}
+		$valid = array();
 
 		foreach ( $tokens as $token ) {
 			$cidr = self::normalize_cidr( $token );
-			if ( $cidr === '' ) {
+			if ( '' === $cidr ) {
 				continue;
 			}
 			$valid[] = $cidr;
@@ -101,7 +104,7 @@ final class ClientIp {
 
 	public static function ip_in_cidr( string $ip, string $cidr ): bool {
 		$ip_bin = inet_pton( $ip );
-		if ( $ip_bin === false ) {
+		if ( false === $ip_bin ) {
 			return false;
 		}
 
@@ -116,12 +119,12 @@ final class ClientIp {
 		}
 
 		$net_bin = inet_pton( $subnet );
-		if ( $net_bin === false || strlen( $net_bin ) !== strlen( $ip_bin ) ) {
+		if ( false === $net_bin || strlen( $net_bin ) !== strlen( $ip_bin ) ) {
 			return false;
 		}
 
 		$max_bits = strlen( $ip_bin ) * 8;
-		if ( $bits === null ) {
+		if ( null === $bits ) {
 			return $net_bin === $ip_bin;
 		}
 		if ( $bits < 0 || $bits > $max_bits ) {
@@ -133,7 +136,7 @@ final class ClientIp {
 		if ( $bytes > 0 && substr( $ip_bin, 0, $bytes ) !== substr( $net_bin, 0, $bytes ) ) {
 			return false;
 		}
-		if ( $rem === 0 ) {
+		if ( 0 === $rem ) {
 			return true;
 		}
 
@@ -144,7 +147,7 @@ final class ClientIp {
 
 	public static function normalize( string $ip ): string {
 		$ip = trim( $ip );
-		if ( $ip === '' || ! filter_var( $ip, FILTER_VALIDATE_IP ) ) {
+		if ( '' === $ip || ! filter_var( $ip, FILTER_VALIDATE_IP ) ) {
 			return '';
 		}
 
@@ -153,7 +156,7 @@ final class ClientIp {
 
 	private static function normalize_cidr( string $token ): string {
 		$token = trim( $token );
-		if ( $token === '' ) {
+		if ( '' === $token ) {
 			return '';
 		}
 
@@ -163,7 +166,7 @@ final class ClientIp {
 
 		[ $subnet, $bits_raw ] = explode( '/', $token, 2 );
 		$subnet                = self::normalize( $subnet );
-		if ( $subnet === '' || ! preg_match( '/^\d+$/', $bits_raw ) ) {
+		if ( '' === $subnet || ! preg_match( '/^\d+$/', $bits_raw ) ) {
 			return '';
 		}
 

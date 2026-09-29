@@ -15,7 +15,7 @@ final class RedirectHandler {
 	 * Constructor.
 	 */
 	public function __construct() {
-		add_action( 'template_redirect', [ $this, 'handle_redirection' ], 5 );
+		add_action( 'template_redirect', array( $this, 'handle_redirection' ), 5 );
 	}
 
 	/**
@@ -34,7 +34,7 @@ final class RedirectHandler {
 		}
 
 		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? (string) $_SERVER['REQUEST_URI'] : '';
-		$parsed_path = parse_url( $request_uri, PHP_URL_PATH );
+		$parsed_path = wp_parse_url( $request_uri, PHP_URL_PATH );
 		$path        = is_string( $parsed_path ) ? trim( $parsed_path, '/' ) : '';
 
 		$base = get_option( 'vs_relink_base', 're' );
@@ -53,17 +53,21 @@ final class RedirectHandler {
 	 */
 	private function execute_redirection( int $link_id ): void {
 		$target_url      = (string) get_post_meta( $link_id, '_vs_relink_target_url', true );
-		$redirect_type   = UrlGuard::redirect_code( get_post_meta( $link_id, '_vs_relink_type', true ) ?: 301 );
-		$forward_params  = get_post_meta( $link_id, '_vs_relink_forward_params', true ) === 'yes';
-		$enable_tracking = get_post_meta( $link_id, '_vs_relink_tracking', true ) !== 'no';
+		$stored_type     = get_post_meta( $link_id, '_vs_relink_type', true );
+		$redirect_type   = UrlGuard::redirect_code( $stored_type ? $stored_type : 301 );
+		$forward_params  = 'yes' === get_post_meta( $link_id, '_vs_relink_forward_params', true );
+		$enable_tracking = 'no' !== get_post_meta( $link_id, '_vs_relink_tracking', true );
 
-		if ( $target_url === '' || ! UrlGuard::is_http_url( $target_url ) ) {
+		if ( '' === $target_url || ! UrlGuard::is_http_url( $target_url ) ) {
 			return;
 		}
 
+		// Public short links intentionally accept campaign query args. A nonce would break every published URL.
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended
 		if ( $forward_params && ! empty( $_GET ) ) {
 			$target_url = ForwardParams::append( $target_url, wp_unslash( $_GET ) );
 		}
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		if ( ! UrlGuard::is_http_url( $target_url ) ) {
 			return;
@@ -73,6 +77,7 @@ final class RedirectHandler {
 			$this->record_click( $link_id );
 		}
 
+		// phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect -- affiliate targets are external; UrlGuard already requires http(s).
 		wp_redirect( $target_url, $redirect_type, 'LW-ReLink' );
 		exit;
 	}
@@ -102,24 +107,24 @@ final class RedirectHandler {
 
 		$wpdb->insert(
 			\Vs\ReLink\Database\Schema::get_clicks_table(),
-			[
+			array(
 				'link_id'    => $link_id,
 				'ip_address' => substr( $ip, 0, 45 ),
 				'referer'    => $referer,
 				'user_agent' => $ua,
 				'is_bot'     => $is_bot ? 1 : 0,
-			],
-			[ '%d', '%s', '%s', '%s', '%d' ]
+			),
+			array( '%d', '%s', '%s', '%s', '%d' )
 		);
 
 		WebhookService::trigger(
 			$link_id,
-			[
+			array(
 				'ip'      => $ip,
 				'referer' => $referer,
 				'ua'      => $ua,
 				'is_bot'  => $is_bot,
-			]
+			)
 		);
 	}
 
@@ -128,11 +133,11 @@ final class RedirectHandler {
 	 */
 	private function is_bot(): bool {
 		$ua = isset( $_SERVER['HTTP_USER_AGENT'] ) ? (string) $_SERVER['HTTP_USER_AGENT'] : '';
-		if ( $ua === '' ) {
+		if ( '' === $ua ) {
 			return true;
 		}
 
-		$bots = [ 'bot', 'crawl', 'slurp', 'spider', 'mediapartners', 'chrome-lighthouse' ];
+		$bots = array( 'bot', 'crawl', 'slurp', 'spider', 'mediapartners', 'chrome-lighthouse' );
 		foreach ( $bots as $bot ) {
 			if ( stripos( $ua, $bot ) !== false ) {
 				return true;

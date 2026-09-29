@@ -22,15 +22,15 @@ final class LegacyMigrator {
 
 	public const NEEDS_REPAIR = 'vs_relink_lw_needs_repair';
 
-	private const OPTION_MAP = [
+	private const OPTION_MAP = array(
 		'lw_relink_db_version'    => Ids::OPTION_DB_VERSION,
 		'lw_relink_base'          => Ids::OPTION_BASE,
 		'lw_relink_exclude_bots'  => 'vs_relink_exclude_bots',
 		'lw_relink_log_retention' => 'vs_relink_log_retention',
 		'lw_relink_webhook_url'   => 'vs_relink_webhook_url',
-	];
+	);
 
-	private const META_MAP = [
+	private const META_MAP = array(
 		'_lw_relink_original_url'   => '_vs_relink_original_url',
 		'_lw_relink_target_url'     => '_vs_relink_target_url',
 		'_lw_relink_type'           => '_vs_relink_type',
@@ -39,12 +39,12 @@ final class LegacyMigrator {
 		'_lw_relink_sponsored'      => '_vs_relink_sponsored',
 		'_lw_relink_forward_params' => '_vs_relink_forward_params',
 		'_lw_relink_tracking'       => '_vs_relink_tracking',
-	];
+	);
 
-	private const TERM_META_MAP = [
+	private const TERM_META_MAP = array(
 		'_lw_partner_domains'    => Ids::PARTNER_META_DOMAINS,
 		'_lw_partner_url_suffix' => Ids::PARTNER_META_URL_SUFFIX,
-	];
+	);
 
 	/**
 	 * Run on activation / plugins_loaded when legacy data remains.
@@ -74,7 +74,7 @@ final class LegacyMigrator {
 		global $wpdb;
 
 		$tax = 0;
-		foreach ( [ 'lw_relink_partner', 'lw_link_group' ] as $taxonomy ) {
+		foreach ( array( 'lw_relink_partner', 'lw_link_group' ) as $taxonomy ) {
 			$tax += (int) $wpdb->get_var(
 				$wpdb->prepare(
 					"SELECT COUNT(*) FROM {$wpdb->term_taxonomy} WHERE taxonomy = %s",
@@ -96,7 +96,7 @@ final class LegacyMigrator {
 			}
 		}
 
-		$meta_keys = array_keys( self::META_MAP );
+		$meta_keys    = array_keys( self::META_MAP );
 		$placeholders = implode( ',', array_fill( 0, count( $meta_keys ), '%s' ) );
 		// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$postmeta = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->postmeta} WHERE meta_key IN ($placeholders)", ...$meta_keys ) );
@@ -109,7 +109,7 @@ final class LegacyMigrator {
 		$legacy_table = $wpdb->prefix . 'lw_relink_clicks';
 		$table        = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $legacy_table ) ) === $legacy_table ? 1 : 0;
 
-		return [
+		return array(
 			'posts'      => (int) $wpdb->get_var(
 				$wpdb->prepare(
 					"SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = %s",
@@ -122,7 +122,7 @@ final class LegacyMigrator {
 			'termmeta'   => $termmeta,
 			'table'      => $table,
 			'cron'       => wp_next_scheduled( 'lw_relink_daily_cleanup' ) ? 1 : 0,
-		];
+		);
 	}
 
 	/**
@@ -137,19 +137,19 @@ final class LegacyMigrator {
 				delete_option( self::NEEDS_REPAIR );
 			}
 
-			return [
+			return array(
 				'dry_run' => $dry_run,
 				'before'  => $before,
 				'after'   => $before,
 				'changed' => false,
-			];
+			);
 		}
 
 		global $wpdb;
 		$did = false;
 
 		if ( $before['posts'] > 0 ) {
-			$wpdb->update( $wpdb->posts, [ 'post_type' => Ids::POST_TYPE ], [ 'post_type' => 'lw_relink' ] );
+			$wpdb->update( $wpdb->posts, array( 'post_type' => Ids::POST_TYPE ), array( 'post_type' => 'lw_relink' ) );
 			$did = true;
 		}
 
@@ -180,14 +180,14 @@ final class LegacyMigrator {
 		}
 
 		foreach ( self::META_MAP as $legacy => $modern ) {
-			$updated = $wpdb->update( $wpdb->postmeta, [ 'meta_key' => $modern ], [ 'meta_key' => $legacy ] );
+			$updated = $wpdb->update( $wpdb->postmeta, array( 'meta_key' => $modern ), array( 'meta_key' => $legacy ) );
 			if ( false !== $updated && $updated > 0 ) {
 				$did = true;
 			}
 		}
 
 		foreach ( self::TERM_META_MAP as $legacy => $modern ) {
-			$updated = $wpdb->update( $wpdb->termmeta, [ 'meta_key' => $modern ], [ 'meta_key' => $legacy ] );
+			$updated = $wpdb->update( $wpdb->termmeta, array( 'meta_key' => $modern ), array( 'meta_key' => $legacy ) );
 			if ( false !== $updated && $updated > 0 ) {
 				$did = true;
 			}
@@ -221,12 +221,12 @@ final class LegacyMigrator {
 			flush_rewrite_rules( false );
 		}
 
-		return [
+		return array(
 			'dry_run' => false,
 			'before'  => $before,
 			'after'   => $after,
 			'changed' => $did,
-		];
+		);
 	}
 
 	public static function needs_admin_notice(): bool {
@@ -254,7 +254,7 @@ final class LegacyMigrator {
 			return false;
 		}
 
-		$wpdb->update( $wpdb->term_taxonomy, [ 'taxonomy' => $modern ], [ 'taxonomy' => $legacy ] );
+		$wpdb->update( $wpdb->term_taxonomy, array( 'taxonomy' => $modern ), array( 'taxonomy' => $legacy ) );
 		return true;
 	}
 }

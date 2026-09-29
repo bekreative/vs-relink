@@ -22,14 +22,14 @@ final class SettingsSanitizer {
 	}
 
 	public static function sanitize_flag( mixed $value ): string {
-		return ( $value === '1' || $value === 1 || $value === true ) ? '1' : '0';
+		return ( '1' === $value || 1 === $value || true === $value ) ? '1' : '0';
 	}
 
 	/**
 	 * Unknown values keep logs forever (0). Deletion only happens for an explicit positive choice.
 	 */
 	public static function sanitize_retention( mixed $value ): string {
-		$allowed = [ '0', '30', '90', '180', '365' ];
+		$allowed = array( '0', '30', '90', '180', '365' );
 		$raw     = (string) (int) $value;
 
 		return in_array( $raw, $allowed, true ) ? $raw : '0';
@@ -37,7 +37,7 @@ final class SettingsSanitizer {
 
 	public static function sanitize_webhook_url( mixed $value ): string {
 		$url = esc_url_raw( trim( (string) $value ) );
-		if ( $url === '' || ! UrlGuard::is_http_url( $url ) ) {
+		if ( '' === $url || ! UrlGuard::is_http_url( $url ) ) {
 			return '';
 		}
 
@@ -46,12 +46,12 @@ final class SettingsSanitizer {
 
 	public static function sanitize_webhook_secret( mixed $value ): string {
 		$secret = trim( (string) $value );
-		$secret = str_replace( [ "\r", "\n", "\0" ], '', $secret );
-		$clear  = isset( $_POST['vs_relink_clear_webhook_secret'] ) && (string) wp_unslash( $_POST['vs_relink_clear_webhook_secret'] ) === '1';
-		if ( $secret === '' && $clear ) {
+		$secret = str_replace( array( "\r", "\n", "\0" ), '', $secret );
+		$clear  = self::clear_webhook_secret_requested();
+		if ( '' === $secret && $clear ) {
 			return '';
 		}
-		if ( $secret === '' ) {
+		if ( '' === $secret ) {
 			return (string) get_option( 'vs_relink_webhook_secret', '' );
 		}
 		if ( strlen( $secret ) > 255 ) {
@@ -59,6 +59,23 @@ final class SettingsSanitizer {
 		}
 
 		return $secret;
+	}
+
+	/**
+	 * The clear checkbox is only honored for a real settings-form save.
+	 * option updates from WP-CLI have no nonce and must not wipe the secret.
+	 */
+	private static function clear_webhook_secret_requested(): bool {
+		if ( ! isset( $_POST['vs_relink_clear_webhook_secret'] ) ) {
+			return false;
+		}
+
+		$nonce = isset( $_POST['_wpnonce'] ) ? sanitize_text_field( wp_unslash( (string) $_POST['_wpnonce'] ) ) : '';
+		if ( ! wp_verify_nonce( $nonce, 'vs_relink_settings-options' ) ) {
+			return false;
+		}
+
+		return '1' === (string) wp_unslash( $_POST['vs_relink_clear_webhook_secret'] );
 	}
 
 	public static function sanitize_trusted_proxies( mixed $value ): string {

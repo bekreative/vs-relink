@@ -31,6 +31,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `relink/create-link` and `relink/get-stats` accept `publish_relinks` or `manage_relink` instead of requiring `manage_options`.
 - `wp relink create --dry-run` prints the redirect type from the same `LinkFactory` preview used by REST.
 - Existing published short URLs and permalinks are unchanged. Click retention still defaults to keep forever and does not delete rows unless a retention period is saved.
+- `composer phpcs` uses `phpcs.xml.dist` (WordPress-Extra and PHPCompatibilityWP for PHP 8.1+). PSR-4 class filenames stay as they are so Composer autoload keeps working.
 
 ## [2.0.1] — 2026-07-28
 

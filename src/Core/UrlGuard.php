@@ -12,14 +12,14 @@ final class UrlGuard {
 	/**
 	 * @var int[]
 	 */
-	public const REDIRECT_CODES = [ 301, 302, 307 ];
+	public const REDIRECT_CODES = array( 301, 302, 307 );
 
 	/**
 	 * True when the URL is an absolute http or https URL with a host.
 	 */
 	public static function is_http_url( string $url ): bool {
 		$url = trim( $url );
-		if ( $url === '' || preg_match( '/\s/', $url ) ) {
+		if ( '' === $url || preg_match( '/\s/', $url ) ) {
 			return false;
 		}
 
@@ -34,7 +34,7 @@ final class UrlGuard {
 
 		$scheme = strtolower( (string) $parts['scheme'] );
 
-		return $scheme === 'http' || $scheme === 'https';
+		return 'http' === $scheme || 'https' === $scheme;
 	}
 
 	/**

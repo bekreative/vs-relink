@@ -30,7 +30,7 @@ final class AbilitiesController {
 	 * Constructor.
 	 */
 	public function __construct() {
-		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
+		add_action( 'rest_api_init', array( $this, 'register_routes' ) );
 	}
 
 	/**
@@ -39,68 +39,68 @@ final class AbilitiesController {
 	public function register_routes(): void {
 		$this->route(
 			'relink/health-check',
-			[ $this, 'ability_health_check' ],
-			[ $this, 'can_manage_options' ],
-			[
-				'limit'  => [
+			array( $this, 'ability_health_check' ),
+			array( $this, 'can_manage_options' ),
+			array(
+				'limit'  => array(
 					'description'       => __( 'Maximum links to check in this call.', 'vs-relink' ),
 					'type'              => 'integer',
 					'default'           => self::HEALTH_LIMIT,
-					'sanitize_callback' => [ $this, 'sanitize_health_limit' ],
-				],
-				'offset' => [
+					'sanitize_callback' => array( $this, 'sanitize_health_limit' ),
+				),
+				'offset' => array(
 					'description'       => __( 'Number of published links to skip.', 'vs-relink' ),
 					'type'              => 'integer',
 					'default'           => 0,
-					'sanitize_callback' => [ $this, 'sanitize_offset' ],
-				],
-			]
+					'sanitize_callback' => array( $this, 'sanitize_offset' ),
+				),
+			)
 		);
 
 		$this->route(
 			'relink/get-stats',
-			[ $this, 'ability_get_stats' ],
-			[ $this, 'can_use_bot_api' ],
-			[
-				'days'     => [
+			array( $this, 'ability_get_stats' ),
+			array( $this, 'can_use_bot_api' ),
+			array(
+				'days'     => array(
 					'type'              => 'integer',
 					'default'           => 30,
-					'sanitize_callback' => [ $this, 'sanitize_days' ],
-				],
-				'link_id'  => [
+					'sanitize_callback' => array( $this, 'sanitize_days' ),
+				),
+				'link_id'  => array(
 					'type'              => 'integer',
 					'default'           => 0,
 					'sanitize_callback' => 'absint',
-				],
-				'group_id' => [
+				),
+				'group_id' => array(
 					'type'              => 'integer',
 					'default'           => 0,
 					'sanitize_callback' => 'absint',
-				],
-			]
+				),
+			)
 		);
 
-		$this->route( 'relink/export', [ $this, 'ability_export' ], [ $this, 'can_manage_options' ] );
+		$this->route( 'relink/export', array( $this, 'ability_export' ), array( $this, 'can_manage_options' ) );
 
 		$write_args = $this->link_args( false );
-		$this->route( 'relink/create-link', [ $this, 'ability_create_link' ], [ $this, 'can_use_bot_api' ], $write_args );
-		$this->route( 'relink/preview-link', [ $this, 'ability_preview_link' ], [ $this, 'can_use_bot_api' ], $write_args );
-		$this->route( 'relink/lookup-link', [ $this, 'ability_lookup_link' ], [ $this, 'can_use_bot_api' ], $this->link_args( true ) );
+		$this->route( 'relink/create-link', array( $this, 'ability_create_link' ), array( $this, 'can_use_bot_api' ), $write_args );
+		$this->route( 'relink/preview-link', array( $this, 'ability_preview_link' ), array( $this, 'can_use_bot_api' ), $write_args );
+		$this->route( 'relink/lookup-link', array( $this, 'ability_lookup_link' ), array( $this, 'can_use_bot_api' ), $this->link_args( true ) );
 	}
 
 	/**
 	 * @param array<string, mixed> $args
 	 */
-	private function route( string $name, callable $callback, callable $permission, array $args = [] ): void {
+	private function route( string $name, callable $callback, callable $permission, array $args = array() ): void {
 		register_rest_route(
 			self::NAMESPACE,
 			'/' . self::BASE . '/' . $name . '/run',
-			[
+			array(
 				'methods'             => 'POST',
 				'callback'            => $callback,
 				'permission_callback' => $permission,
 				'args'                => $args,
-			]
+			)
 		);
 	}
 
@@ -161,12 +161,12 @@ final class AbilitiesController {
 
 		$ids = LinkChecker::get_all_relink_ids();
 		if ( ! is_array( $ids ) ) {
-			$ids = [];
+			$ids = array();
 		}
 		$total = count( $ids );
 		$page  = array_slice( $ids, $offset, $limit );
 
-		$results = [];
+		$results = array();
 		foreach ( $page as $id ) {
 			$results[] = LinkChecker::check_link( (int) $id, 3 );
 		}
@@ -174,9 +174,9 @@ final class AbilitiesController {
 		$next = $offset + count( $page );
 
 		return new WP_REST_Response(
-			[
+			array(
 				'success' => true,
-				'data'    => [
+				'data'    => array(
 					'total'         => $total,
 					'offset'        => $offset,
 					'limit'         => $limit,
@@ -184,8 +184,8 @@ final class AbilitiesController {
 					'next_offset'   => $next < $total ? $next : null,
 					'total_checked' => count( $results ),
 					'results'       => $results,
-				],
-			],
+				),
+			),
 			200
 		);
 	}
@@ -204,13 +204,13 @@ final class AbilitiesController {
 		$stats_repo = new StatsRepository();
 
 		return new WP_REST_Response(
-			[
+			array(
 				'success' => true,
-				'data'    => [
+				'data'    => array(
 					'trend' => $stats_repo->get_click_trend( $days, $link_id, $group_id ),
 					'top'   => $stats_repo->get_top_links( 10 ),
-				],
-			],
+				),
+			),
 			200
 		);
 	}
@@ -222,10 +222,10 @@ final class AbilitiesController {
 		unset( $request );
 
 		return new WP_REST_Response(
-			[
+			array(
 				'success' => true,
 				'data'    => DataService::export_to_json(),
-			],
+			),
 			200
 		);
 	}
@@ -250,10 +250,10 @@ final class AbilitiesController {
 		AuditLog::record_create( $result, (string) $args['original_url'], 'rest' );
 
 		return new WP_REST_Response(
-			[
+			array(
 				'success' => true,
 				'data'    => $result,
-			],
+			),
 			200
 		);
 	}
@@ -268,10 +268,10 @@ final class AbilitiesController {
 		}
 
 		return new WP_REST_Response(
-			[
+			array(
 				'success' => true,
 				'data'    => $result,
-			],
+			),
 			200
 		);
 	}
@@ -288,10 +288,10 @@ final class AbilitiesController {
 		}
 
 		return new WP_REST_Response(
-			[
+			array(
 				'success' => true,
 				'data'    => $result,
-			],
+			),
 			200
 		);
 	}
@@ -300,72 +300,72 @@ final class AbilitiesController {
 	 * @return array<string, mixed>
 	 */
 	private function link_args( bool $partner_required ): array {
-		return [
-			'original_url'   => [
+		return array(
+			'original_url'   => array(
 				'description'       => __( 'Clean product URL (http or https).', 'vs-relink' ),
 				'type'              => 'string',
 				'required'          => true,
 				'sanitize_callback' => static function ( $value ): string {
 					return esc_url_raw( (string) $value );
 				},
-			],
-			'partner'        => [
+			),
+			'partner'        => array(
 				'description'       => __( 'Slug of an existing partner. Required when the domain is not already mapped.', 'vs-relink' ),
 				'type'              => 'string',
 				'required'          => $partner_required,
 				'sanitize_callback' => 'sanitize_text_field',
-			],
-			'short_slug'     => [
+			),
+			'short_slug'     => array(
 				'type'              => 'string',
 				'required'          => false,
 				'sanitize_callback' => 'sanitize_title',
-			],
-			'title'          => [
+			),
+			'title'          => array(
 				'type'              => 'string',
 				'required'          => false,
 				'sanitize_callback' => 'sanitize_text_field',
-			],
-			'redirect_type'  => [
+			),
+			'redirect_type'  => array(
 				'description'       => __( '301, 302, or 307. Other values are stored as 301.', 'vs-relink' ),
 				'type'              => 'string',
 				'default'           => '301',
 				'sanitize_callback' => static function ( $value ): string {
 					return (string) UrlGuard::redirect_code( $value );
 				},
-			],
-			'tracking'       => [
+			),
+			'tracking'       => array(
 				'type'              => 'boolean',
 				'default'           => true,
 				'sanitize_callback' => 'rest_sanitize_boolean',
-			],
-			'nofollow'       => [
+			),
+			'nofollow'       => array(
 				'type'              => 'boolean',
 				'default'           => false,
 				'sanitize_callback' => 'rest_sanitize_boolean',
-			],
-			'sponsored'      => [
+			),
+			'sponsored'      => array(
 				'type'              => 'boolean',
 				'default'           => false,
 				'sanitize_callback' => 'rest_sanitize_boolean',
-			],
-			'forward_params' => [
+			),
+			'forward_params' => array(
 				'type'              => 'boolean',
 				'default'           => false,
 				'sanitize_callback' => 'rest_sanitize_boolean',
-			],
-			'keywords'       => [
+			),
+			'keywords'       => array(
 				'type'              => 'string',
 				'required'          => false,
 				'sanitize_callback' => 'sanitize_textarea_field',
-			],
-		];
+			),
+		);
 	}
 
 	/**
 	 * @return array<string, mixed>
 	 */
 	private function link_payload( WP_REST_Request $request ): array {
-		return [
+		return array(
 			'original_url'   => (string) $request->get_param( 'original_url' ),
 			'partner'        => (string) ( $request->get_param( 'partner' ) ?? '' ),
 			'short_slug'     => (string) ( $request->get_param( 'short_slug' ) ?? '' ),
@@ -376,7 +376,7 @@ final class AbilitiesController {
 			'sponsored'      => (bool) $request->get_param( 'sponsored' ),
 			'forward_params' => (bool) $request->get_param( 'forward_params' ),
 			'keywords'       => (string) ( $request->get_param( 'keywords' ) ?? '' ),
-		];
+		);
 	}
 
 	private function from_error( \WP_Error $error, int $status = 400 ): WP_REST_Response {
@@ -389,11 +389,11 @@ final class AbilitiesController {
 
 	private function error( string $code, string $message, int $status ): WP_REST_Response {
 		return new WP_REST_Response(
-			[
+			array(
 				'success' => false,
 				'code'    => $code,
 				'message' => $message,
-			],
+			),
 			$status
 		);
 	}

@@ -16,7 +16,7 @@ final class ClickThrottle {
 	 */
 	public static function allow( int $link_id, string $ip ): bool {
 		$enabled = get_option( 'vs_relink_click_throttle', '1' );
-		if ( $enabled !== '1' && $enabled !== 1 && $enabled !== true ) {
+		if ( '1' !== $enabled && 1 !== $enabled && true !== $enabled ) {
 			return true;
 		}
 

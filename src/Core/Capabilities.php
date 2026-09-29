@@ -25,7 +25,7 @@ final class Capabilities {
 	 * @return string[]
 	 */
 	public static function administrator_caps(): array {
-		return [
+		return array(
 			'edit_relinks',
 			'edit_others_relinks',
 			'edit_published_relinks',
@@ -38,7 +38,7 @@ final class Capabilities {
 			'read_private_relinks',
 			self::MANAGE,
 			self::MANAGE_PARTNERS,
-		];
+		);
 	}
 
 	/**
@@ -47,12 +47,12 @@ final class Capabilities {
 	 * @return string[]
 	 */
 	public static function bot_caps(): array {
-		return [
+		return array(
 			'read',
 			'edit_relinks',
 			'publish_relinks',
 			self::MANAGE,
-		];
+		);
 	}
 
 	/**

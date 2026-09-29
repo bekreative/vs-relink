@@ -71,7 +71,7 @@ function vs_relink(): Plugin {
 	return $instance;
 }
 
-register_activation_hook( __FILE__, [ Database\Schema::class, 'activate' ] );
+register_activation_hook( __FILE__, array( Database\Schema::class, 'activate' ) );
 
 register_deactivation_hook(
 	__FILE__,

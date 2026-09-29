@@ -21,26 +21,32 @@ final class DataService {
 	 * @return array
 	 */
 	public static function export_to_json(): array {
-		$args = [
+		$args = array(
 			'post_type'      => ReLink::POST_TYPE,
 			'post_status'    => 'publish',
 			'posts_per_page' => -1,
-		];
+		);
 
 		$query = new \WP_Query( $args );
-		$data  = [];
+		$data  = array();
 
 		if ( $query->have_posts() ) {
 			foreach ( $query->posts as $post ) {
 				$terms = wp_get_object_terms( $post->ID, LinkGroup::TAXONOMY );
-				$group = ! empty( $terms ) && ! is_wp_error( $terms ) ? [ 'name' => $terms[0]->name, 'slug' => $terms[0]->slug ] : null;
+				$group = ! empty( $terms ) && ! is_wp_error( $terms ) ? array(
+					'name' => $terms[0]->name,
+					'slug' => $terms[0]->slug,
+				) : null;
 
 				$partner_terms = wp_get_object_terms( $post->ID, Partner::TAXONOMY );
 				$partner       = ( ! is_wp_error( $partner_terms ) && ! empty( $partner_terms ) )
-					? [ 'name' => $partner_terms[0]->name, 'slug' => $partner_terms[0]->slug ]
+					? array(
+						'name' => $partner_terms[0]->name,
+						'slug' => $partner_terms[0]->slug,
+					)
 					: null;
 
-				$data[] = [
+				$data[] = array(
 					'title'          => $post->post_title,
 					'slug'           => $post->post_name,
 					'description'    => $post->post_content,
@@ -53,7 +59,7 @@ final class DataService {
 					'tracking'       => get_post_meta( $post->ID, '_vs_relink_tracking', true ),
 					'group'          => $group,
 					'partner'        => $partner,
-				];
+				);
 			}
 		}
 
@@ -98,7 +104,12 @@ final class DataService {
 			++$imported;
 		}
 
-		$message = sprintf( __( 'Import completed. %d imported, %d skipped.', 'vs-relink' ), $imported, $skipped );
+		$message = sprintf(
+			/* translators: 1: imported row count, 2: skipped row count */
+			__( 'Import completed. %1$d imported, %2$d skipped.', 'vs-relink' ),
+			$imported,
+			$skipped
+		);
 		if ( count( $links ) > $limit ) {
 			$message .= ' ' . sprintf(
 				/* translators: %d: maximum rows imported in one request */
@@ -107,10 +118,10 @@ final class DataService {
 			);
 		}
 
-		return [
+		return array(
 			'success' => true,
 			'message' => $message,
-		];
+		);
 	}
 
 	/**
@@ -119,14 +130,14 @@ final class DataService {
 	 * @return string
 	 */
 	public static function generate_htaccess(): string {
-		$args = [
+		$args = array(
 			'post_type'      => ReLink::POST_TYPE,
 			'post_status'    => 'publish',
 			'posts_per_page' => -1,
-		];
+		);
 
-		$query = new \WP_Query( $args );
-		$rules = "# VS ReLink Export\n";
+		$query  = new \WP_Query( $args );
+		$rules  = "# VS ReLink Export\n";
 		$rules .= "RewriteEngine On\n\n";
 
 		if ( $query->have_posts() ) {
@@ -135,13 +146,14 @@ final class DataService {
 				if ( ! UrlGuard::is_http_url( $target_url ) ) {
 					continue;
 				}
-				$type = (string) UrlGuard::redirect_code( get_post_meta( $post->ID, '_vs_relink_type', true ) ?: '301' );
-				
+				$stored_type = get_post_meta( $post->ID, '_vs_relink_type', true );
+				$type        = (string) UrlGuard::redirect_code( $stored_type ? $stored_type : '301' );
+
 				// Get relative path for the link
 				$base  = get_option( 'vs_relink_base', 're' );
 				$terms = wp_get_object_terms( $post->ID, LinkGroup::TAXONOMY );
 				$path  = '/';
-				
+
 				if ( $base ) {
 					$path .= $base . '/';
 				}

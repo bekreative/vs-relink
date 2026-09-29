@@ -17,7 +17,7 @@ final class AuditLog {
 	 * @param array<string, mixed> $result LinkFactory::create() success payload.
 	 */
 	public static function record_create( array $result, string $original_url, string $source ): void {
-		$entry = [
+		$entry = array(
 			'time'         => gmdate( 'c' ),
 			'user_id'      => get_current_user_id(),
 			'link_id'      => (int) ( $result['link_id'] ?? 0 ),
@@ -26,11 +26,11 @@ final class AuditLog {
 			'original_url' => esc_url_raw( $original_url ),
 			'existed'      => ! empty( $result['existed'] ),
 			'source'       => sanitize_key( $source ),
-		];
+		);
 
-		$log = get_option( self::OPTION, [] );
+		$log = get_option( self::OPTION, array() );
 		if ( ! is_array( $log ) ) {
-			$log = [];
+			$log = array();
 		}
 
 		array_unshift( $log, $entry );

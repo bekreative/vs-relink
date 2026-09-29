@@ -16,8 +16,8 @@ final class ForwardParams {
 	 * @return array<string, string>
 	 */
 	public static function select( array $query ): array {
-		$extra = apply_filters( 'vs_relink_forward_param_keys', [ 'gclid', 'fbclid' ] );
-		$exact = [];
+		$extra = apply_filters( 'vs_relink_forward_param_keys', array( 'gclid', 'fbclid' ) );
+		$exact = array();
 		if ( is_array( $extra ) ) {
 			foreach ( $extra as $key ) {
 				$key = strtolower( (string) $key );
@@ -27,7 +27,7 @@ final class ForwardParams {
 			}
 		}
 
-		$selected = [];
+		$selected = array();
 		foreach ( $query as $key => $value ) {
 			if ( ! is_scalar( $value ) ) {
 				continue;
@@ -37,7 +37,7 @@ final class ForwardParams {
 				continue;
 			}
 			$clean = sanitize_text_field( (string) $value );
-			if ( $clean === '' ) {
+			if ( '' === $clean ) {
 				continue;
 			}
 			$selected[ $name ] = substr( $clean, 0, 150 );
@@ -53,7 +53,7 @@ final class ForwardParams {
 	 */
 	public static function append( string $url, array $query ): string {
 		$selected = self::select( $query );
-		if ( $selected === [] || ! UrlGuard::is_http_url( $url ) ) {
+		if ( array() === $selected || ! UrlGuard::is_http_url( $url ) ) {
 			return $url;
 		}
 
@@ -62,20 +62,20 @@ final class ForwardParams {
 			return $url;
 		}
 
-		$existing = [];
+		$existing = array();
 		if ( ! empty( $parts['query'] ) ) {
 			parse_str( (string) $parts['query'], $existing );
 			if ( ! is_array( $existing ) ) {
-				$existing = [];
+				$existing = array();
 			}
 		}
 
-		$existing_keys = [];
+		$existing_keys = array();
 		foreach ( array_keys( $existing ) as $key ) {
 			$existing_keys[ strtolower( (string) $key ) ] = true;
 		}
 
-		$add = [];
+		$add = array();
 		foreach ( $selected as $key => $value ) {
 			if ( isset( $existing_keys[ $key ] ) ) {
 				continue;
@@ -83,11 +83,11 @@ final class ForwardParams {
 			$add[ $key ] = $value;
 		}
 
-		if ( $add === [] ) {
+		if ( array() === $add ) {
 			return $url;
 		}
 
-		$query_string = isset( $parts['query'] ) && $parts['query'] !== ''
+		$query_string = isset( $parts['query'] ) && '' !== $parts['query']
 			? $parts['query'] . '&' . http_build_query( $add, '', '&', PHP_QUERY_RFC3986 )
 			: http_build_query( $add, '', '&', PHP_QUERY_RFC3986 );
 
@@ -97,7 +97,7 @@ final class ForwardParams {
 		}
 		$rebuilt .= $parts['path'] ?? '/';
 		$rebuilt .= '?' . $query_string;
-		if ( isset( $parts['fragment'] ) && $parts['fragment'] !== '' ) {
+		if ( isset( $parts['fragment'] ) && '' !== $parts['fragment'] ) {
 			$rebuilt .= '#' . $parts['fragment'];
 		}
 

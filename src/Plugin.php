@@ -25,8 +25,8 @@ final class Plugin {
 	 * Constructor.
 	 */
 	public function __construct() {
-		add_filter( 'user_has_cap', [ Capabilities::class, 'grant_admin_caps' ], 10, 4 );
-		add_action( 'init', [ Capabilities::class, 'persist_admin_caps' ], 1 );
+		add_filter( 'user_has_cap', array( Capabilities::class, 'grant_admin_caps' ), 10, 4 );
+		add_action( 'init', array( Capabilities::class, 'persist_admin_caps' ), 1 );
 		PartnerTermMeta::register_meta_guards();
 		$this->init_hooks();
 		$this->init_components();
@@ -38,8 +38,8 @@ final class Plugin {
 	 * @return void
 	 */
 	private function init_hooks(): void {
-		add_action( 'init', [ $this, 'register_post_types' ] );
-		add_action( 'init', [ $this, 'register_taxonomies' ] );
+		add_action( 'init', array( $this, 'register_post_types' ) );
+		add_action( 'init', array( $this, 'register_taxonomies' ) );
 	}
 
 	/**

@@ -27,7 +27,7 @@ final class CreateRateLimit {
 			return false;
 		}
 
-		set_transient( $key, [ 'count' => $count + 1 ], HOUR_IN_SECONDS );
+		set_transient( $key, array( 'count' => $count + 1 ), HOUR_IN_SECONDS );
 
 		return true;
 	}

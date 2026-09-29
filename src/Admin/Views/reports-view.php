@@ -6,44 +6,59 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+use Vs\ReLink\Admin\AdminController;
 use Vs\ReLink\Admin\AdminLayout;
 use Vs\ReLink\Admin\ReportsHelper;
 use Vs\ReLink\Stats\StatsRepository;
 use Vs\ReLink\Taxonomies\LinkGroup;
 use Vs\ReLink\PostTypes\ReLink;
 
+// phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only report filters; a nonce would expire bookmarked report URLs.
 $days         = isset( $_GET['days'] ) ? max( 1, (int) $_GET['days'] ) : 30;
 $filter_link  = ! empty( $_GET['link_id'] ) ? (int) $_GET['link_id'] : null;
 $filter_group = ! empty( $_GET['group_id'] ) ? (int) $_GET['group_id'] : null;
-$page         = isset( $_GET['paged'] ) ? max( 1, (int) $_GET['paged'] ) : 1;
-$per_page     = 20;
-$offset       = ( $page - 1 ) * $per_page;
+$report_page  = isset( $_GET['paged'] ) ? max( 1, (int) $_GET['paged'] ) : 1;
+// phpcs:enable WordPress.Security.NonceVerification.Recommended
+$report_per_page = 20;
+$offset          = ( $report_page - 1 ) * $report_per_page;
 
 $prev_days = $days * 2;
 
-$total_clicks      = StatsRepository::get_clicks_in_period( $days, $filter_link, $filter_group );
-$prev_clicks       = StatsRepository::get_clicks_in_period( $prev_days, $filter_link, $filter_group ) - $total_clicks;
-$unique_visitors   = StatsRepository::get_unique_visitors( $days, $filter_link, $filter_group );
-$prev_visitors     = StatsRepository::get_unique_visitors( $prev_days, $filter_link, $filter_group ) - $unique_visitors;
-$active_links      = StatsRepository::get_active_links( $days, $filter_group );
-$prev_active       = StatsRepository::get_active_links( $prev_days, $filter_group ) - $active_links;
-$avg_per_day       = $days > 0 ? round( $total_clicks / $days, 1 ) : 0;
-$prev_avg          = $days > 0 ? round( $prev_clicks / $days, 1 ) : 0;
+$total_clicks    = StatsRepository::get_clicks_in_period( $days, $filter_link, $filter_group );
+$prev_clicks     = StatsRepository::get_clicks_in_period( $prev_days, $filter_link, $filter_group ) - $total_clicks;
+$unique_visitors = StatsRepository::get_unique_visitors( $days, $filter_link, $filter_group );
+$prev_visitors   = StatsRepository::get_unique_visitors( $prev_days, $filter_link, $filter_group ) - $unique_visitors;
+$active_links    = StatsRepository::get_active_links( $days, $filter_group );
+$prev_active     = StatsRepository::get_active_links( $prev_days, $filter_group ) - $active_links;
+$avg_per_day     = $days > 0 ? round( $total_clicks / $days, 1 ) : 0;
+$prev_avg        = $days > 0 ? round( $prev_clicks / $days, 1 ) : 0;
 
 $trends     = StatsRepository::get_click_trends( $days, $filter_link, $filter_group );
 $top_links  = StatsRepository::get_top_links( 10, $days, $filter_group );
-$link_stats = StatsRepository::get_paginated_link_stats( $per_page, $offset, $filter_group, $filter_link, $days );
+$link_stats = StatsRepository::get_paginated_link_stats( $report_per_page, $offset, $filter_group, $filter_link, $days );
 
-$labels      = [];
-$data_points = [];
+$labels      = array();
+$data_points = array();
 foreach ( $trends as $trend ) {
 	$labels[]      = $trend['date'];
 	$data_points[] = (int) $trend['count'];
 }
 
-$all_groups = get_terms( [ 'taxonomy' => LinkGroup::TAXONOMY, 'hide_empty' => false ] );
-$all_links  = get_posts( [ 'post_type' => ReLink::POST_TYPE, 'posts_per_page' => -1, 'orderby' => 'title', 'order' => 'ASC' ] );
-$base_url   = admin_url( 'edit.php?post_type=vs_relink&page=' . ReportsHelper::PAGE );
+$all_groups   = get_terms(
+	array(
+		'taxonomy'   => LinkGroup::TAXONOMY,
+		'hide_empty' => false,
+	)
+);
+$report_links = get_posts(
+	array(
+		'post_type'      => ReLink::POST_TYPE,
+		'posts_per_page' => -1,
+		'orderby'        => 'title',
+		'order'          => 'ASC',
+	)
+);
+$base_url     = admin_url( 'edit.php?post_type=vs_relink&page=' . ReportsHelper::PAGE );
 
 /**
  * @param float $change Percentage change.
@@ -72,10 +87,11 @@ $render_change = static function ( float $change ): void {
 	<?php if ( $filter_link ) : ?>
 		<div class="lwr-active-filter">
 			<?php
+			$filter_title = get_the_title( $filter_link );
 			printf(
 				/* translators: %s: link title */
 				esc_html__( 'Filtered by: %s', 'vs-relink' ),
-				esc_html( get_the_title( $filter_link ) ?: __( '(deleted)', 'vs-relink' ) )
+				esc_html( $filter_title ? $filter_title : __( '(deleted)', 'vs-relink' ) )
 			);
 			?>
 			<a href="<?php echo esc_url( ReportsHelper::filter_url( null, $filter_group, $days ) ); ?>">× <?php esc_html_e( 'Clear', 'vs-relink' ); ?></a>
@@ -136,9 +152,9 @@ $render_change = static function ( float $change ): void {
 				</select>
 				<select name="link_id" <?php echo $filter_link ? 'style="display:none;"' : ''; ?>>
 					<option value=""><?php esc_html_e( 'All Links', 'vs-relink' ); ?></option>
-					<?php foreach ( $all_links as $link ) : ?>
-						<option value="<?php echo esc_attr( (string) $link->ID ); ?>" <?php selected( $filter_link, $link->ID ); ?>>
-							<?php echo esc_html( $link->post_title ); ?>
+					<?php foreach ( $report_links as $report_link ) : ?>
+						<option value="<?php echo esc_attr( (string) $report_link->ID ); ?>" <?php selected( $filter_link, $report_link->ID ); ?>>
+							<?php echo esc_html( $report_link->post_title ); ?>
 						</option>
 					<?php endforeach; ?>
 				</select>
@@ -173,17 +189,17 @@ $render_change = static function ( float $change ): void {
 				</thead>
 				<tbody>
 					<?php if ( ! empty( $link_stats ) ) : ?>
-						<?php foreach ( $link_stats as $link ) : ?>
+						<?php foreach ( $link_stats as $stat_row ) : ?>
 							<?php
-							$link_id    = (int) $link['ID'];
-							$click_cnt  = (int) $link['click_count'];
-							$is_active  = $filter_link === $link_id;
+							$stat_link_id = (int) $stat_row['ID'];
+							$click_cnt    = (int) $stat_row['click_count'];
+							$is_active    = $filter_link === $stat_link_id;
 							?>
 							<tr>
 								<td>
 									<strong>
-										<a href="<?php echo esc_url( get_edit_post_link( $link_id ) ); ?>">
-											<?php echo esc_html( $link['post_title'] ); ?>
+										<a href="<?php echo esc_url( get_edit_post_link( $stat_link_id ) ); ?>">
+											<?php echo esc_html( $stat_row['post_title'] ); ?>
 										</a>
 									</strong>
 								</td>
@@ -191,7 +207,7 @@ $render_change = static function ( float $change ): void {
 									<?php
 									if ( $click_cnt > 0 ) {
 										$class = 'lwr-click-count' . ( $is_active ? ' lwr-click-count--active' : '' );
-										echo '<a href="' . esc_url( ReportsHelper::filter_url( $link_id, $filter_group, $days ) ) . '" class="' . esc_attr( $class ) . '">';
+										echo '<a href="' . esc_url( ReportsHelper::filter_url( $stat_link_id, $filter_group, $days ) ) . '" class="' . esc_attr( $class ) . '">';
 										echo esc_html( number_format_i18n( $click_cnt ) );
 										echo '</a>';
 									} else {
@@ -201,11 +217,11 @@ $render_change = static function ( float $change ): void {
 								</td>
 								<td>
 									<?php
-									if ( ! empty( $link['last_click'] ) ) {
+									if ( ! empty( $stat_row['last_click'] ) ) {
 										printf(
 											/* translators: %s: human-readable time difference */
 											esc_html__( '%s ago', 'vs-relink' ),
-											esc_html( human_time_diff( strtotime( (string) $link['last_click'] ) ) )
+											esc_html( human_time_diff( strtotime( (string) $stat_row['last_click'] ) ) )
 										);
 									} else {
 										esc_html_e( 'Never', 'vs-relink' );
@@ -221,12 +237,12 @@ $render_change = static function ( float $change ): void {
 			</table>
 			<div class="tablenav bottom">
 				<div class="tablenav-pages">
-					<?php if ( $page > 1 ) : ?>
-						<a class="prev-page button" href="<?php echo esc_url( add_query_arg( 'paged', $page - 1 ) ); ?>">‹</a>
+					<?php if ( $report_page > 1 ) : ?>
+						<a class="prev-page button" href="<?php echo esc_url( add_query_arg( 'paged', $report_page - 1 ) ); ?>">‹</a>
 					<?php endif; ?>
-					<span class="paging-input"><?php echo esc_html( (string) $page ); ?></span>
-					<?php if ( count( $link_stats ) >= $per_page ) : ?>
-						<a class="next-page button" href="<?php echo esc_url( add_query_arg( 'paged', $page + 1 ) ); ?>">›</a>
+					<span class="paging-input"><?php echo esc_html( (string) $report_page ); ?></span>
+					<?php if ( count( $link_stats ) >= $report_per_page ) : ?>
+						<a class="next-page button" href="<?php echo esc_url( add_query_arg( 'paged', $report_page + 1 ) ); ?>">›</a>
 					<?php endif; ?>
 				</div>
 			</div>
@@ -243,8 +259,8 @@ $render_change = static function ( float $change ): void {
 				<?php else : ?>
 					<?php foreach ( $top_links as $index => $top ) : ?>
 						<?php
-						$top_id   = (int) $top['ID'];
-						$top_cnt  = (int) $top['click_count'];
+						$top_id    = (int) $top['ID'];
+						$top_cnt   = (int) $top['click_count'];
 						$is_active = $filter_link === $top_id;
 						?>
 						<li>
@@ -266,36 +282,8 @@ $render_change = static function ( float $change ): void {
 		</div>
 	</div>
 
-	<?php AdminLayout::render_end(); ?>
+	<?php
+	AdminController::enqueue_reports_chart( $labels, $data_points );
+	AdminLayout::render_end();
+	?>
 </div>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-jQuery(function($) {
-	var ctx = document.getElementById('relinkTrendsChart');
-	if (!ctx) return;
-
-	new Chart(ctx.getContext('2d'), {
-		type: 'bar',
-		data: {
-			labels: <?php echo wp_json_encode( $labels ); ?>,
-			datasets: [{
-				label: <?php echo wp_json_encode( __( 'Clicks', 'vs-relink' ) ); ?>,
-				data: <?php echo wp_json_encode( $data_points ); ?>,
-				backgroundColor: 'rgba(79, 140, 255, 0.85)',
-				borderRadius: 6,
-				borderSkipped: false
-			}]
-		},
-		options: {
-			responsive: true,
-			maintainAspectRatio: false,
-			scales: {
-				y: { beginAtZero: true, grid: { color: '#f0f0f1' } },
-				x: { grid: { display: false } }
-			},
-			plugins: { legend: { display: false } }
-		}
-	});
-});
-</script>

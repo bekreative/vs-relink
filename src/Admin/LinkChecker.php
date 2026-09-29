@@ -22,16 +22,28 @@ final class LinkChecker {
 		$short_url  = get_permalink( $post_id );
 
 		if ( empty( $target_url ) ) {
-			return [ 'success' => false, 'message' => __( 'No target URL configured.', 'vs-relink' ) ];
+			return array(
+				'success' => false,
+				'message' => __( 'No target URL configured.', 'vs-relink' ),
+			);
 		}
 
 		$timeout = max( 1, min( 10, $timeout ) );
 
 		// Test the redirection
-		$response = wp_remote_head( $short_url, [ 'redirection' => 0, 'timeout' => $timeout ] );
-		
+		$response = wp_remote_head(
+			$short_url,
+			array(
+				'redirection' => 0,
+				'timeout'     => $timeout,
+			)
+		);
+
 		if ( is_wp_error( $response ) ) {
-			return [ 'success' => false, 'message' => __( 'Short URL unreachable.', 'vs-relink' ) . ' ' . $response->get_error_message() ];
+			return array(
+				'success' => false,
+				'message' => __( 'Short URL unreachable.', 'vs-relink' ) . ' ' . $response->get_error_message(),
+			);
 		}
 
 		$status_code = wp_remote_retrieve_response_code( $response );
@@ -41,17 +53,29 @@ final class LinkChecker {
 		$normalized_location = untrailingslashit( strtolower( (string) $location ) );
 		$normalized_target   = untrailingslashit( strtolower( (string) $target_url ) );
 
-		if ( in_array( $status_code, [ 301, 302, 307 ], true ) && $normalized_location === $normalized_target ) {
-			return [ 
-				'success' => true, 
-				'message' => sprintf( __( 'Success! Redirects to %s', 'vs-relink' ), $location ) 
-			];
+		if ( in_array( $status_code, array( 301, 302, 307 ), true ) && $normalized_location === $normalized_target ) {
+			return array(
+				'success' => true,
+				'message' => sprintf(
+					/* translators: %s: Location header returned by the short URL */
+					__( 'Success! Redirects to %s', 'vs-relink' ),
+					$location
+				),
+			);
 		}
 
-		return [ 
-			'success' => false, 
-			'message' => sprintf( __( 'Failure. Expected redirect to %s but got status %d and location %s', 'vs-relink' ), $target_url, $status_code, $location ?: 'None' ) 
-		];
+		$location_label = $location ? $location : 'None';
+
+		return array(
+			'success' => false,
+			'message' => sprintf(
+				/* translators: 1: expected target URL, 2: HTTP status code, 3: Location header or None */
+				__( 'Failure. Expected redirect to %1$s but got status %2$d and location %3$s', 'vs-relink' ),
+				$target_url,
+				$status_code,
+				$location_label
+			),
+		);
 	}
 
 	/**

@@ -15,8 +15,8 @@ final class LogRotation {
 	 * Constructor.
 	 */
 	public function __construct() {
-		add_action( 'vs_relink_daily_cleanup', [ $this, 'run_cleanup' ] );
-		
+		add_action( 'vs_relink_daily_cleanup', array( $this, 'run_cleanup' ) );
+
 		if ( ! wp_next_scheduled( 'vs_relink_daily_cleanup' ) ) {
 			wp_schedule_event( time(), 'daily', 'vs_relink_daily_cleanup' );
 		}
@@ -36,9 +36,13 @@ final class LogRotation {
 		global $wpdb;
 		$table = Schema::get_clicks_table();
 
-		$wpdb->query( $wpdb->prepare(
-			"DELETE FROM $table WHERE timestamp < DATE_SUB(NOW(), INTERVAL %d DAY)",
-			$days
-		) );
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- clicks table name comes from Schema.
+		$wpdb->query(
+			$wpdb->prepare(
+				"DELETE FROM $table WHERE timestamp < DATE_SUB(NOW(), INTERVAL %d DAY)",
+				$days
+			)
+		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 	}
 }
