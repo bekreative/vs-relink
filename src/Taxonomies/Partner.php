@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Vs\ReLink\Taxonomies;
 
+use Vs\ReLink\Core\Capabilities;
+
 /**
  * Partner taxonomy for affiliate URL suffix configuration.
  */
@@ -47,7 +49,13 @@ final class Partner {
 			'show_admin_column' => false,
 			'query_var'         => true,
 			'rewrite'           => false,
-			'show_in_rest'      => true,
+			'show_in_rest'      => false,
+			'capabilities'      => [
+				'manage_terms' => Capabilities::MANAGE_PARTNERS,
+				'edit_terms'   => Capabilities::MANAGE_PARTNERS,
+				'delete_terms' => Capabilities::MANAGE_PARTNERS,
+				'assign_terms' => 'edit_relinks',
+			],
 		];
 
 		register_taxonomy( self::TAXONOMY, [ \Vs\ReLink\PostTypes\ReLink::POST_TYPE ], $args );

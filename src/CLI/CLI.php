@@ -177,6 +177,7 @@ final class CLI {
 			WP_CLI::line( 'Partner: ' . $preview['partner_name'] . ' (' . $preview['partner'] . ')' );
 			WP_CLI::line( 'Target URL: ' . $preview['target_url'] );
 			WP_CLI::line( 'Short slug: ' . $preview['short_slug'] );
+			WP_CLI::line( 'Redirect type: ' . $preview['redirect_type'] );
 			if ( $preview['existed'] ) {
 				WP_CLI::warning( 'Link already exists (ID: ' . $preview['link_id'] . ').' );
 			}

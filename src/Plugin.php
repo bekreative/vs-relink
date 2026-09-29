@@ -8,6 +8,7 @@ use Vs\ReLink\PostTypes\ReLink;
 use Vs\ReLink\Taxonomies\LinkGroup;
 use Vs\ReLink\Taxonomies\Partner;
 use Vs\ReLink\Admin\PartnerTermMeta;
+use Vs\ReLink\Core\Capabilities;
 use Vs\ReLink\Core\RedirectHandler;
 use Vs\ReLink\Core\Permalinks;
 use Vs\ReLink\Admin\AdminController;
@@ -24,6 +25,9 @@ final class Plugin {
 	 * Constructor.
 	 */
 	public function __construct() {
+		add_filter( 'user_has_cap', [ Capabilities::class, 'grant_admin_caps' ], 10, 4 );
+		add_action( 'init', [ Capabilities::class, 'persist_admin_caps' ], 1 );
+		PartnerTermMeta::register_meta_guards();
 		$this->init_hooks();
 		$this->init_components();
 	}

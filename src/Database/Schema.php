@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Vs\ReLink\Database;
 
+use Vs\ReLink\Core\Capabilities;
 use Vs\ReLink\Storage\Ids;
 
 /**
@@ -16,6 +17,7 @@ final class Schema {
 	 */
 	public static function activate(): void {
 		LegacyMigrator::maybe_migrate();
+		Capabilities::persist_admin_caps( true );
 		self::create_tables();
 		update_option( Ids::OPTION_DB_VERSION, '1.1.0' );
 		flush_rewrite_rules();

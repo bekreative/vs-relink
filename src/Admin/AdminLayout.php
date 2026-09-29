@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Vs\ReLink\Admin;
 
+use Vs\ReLink\Core\Capabilities;
 use Vs\ReLink\PostTypes\ReLink;
 use Vs\ReLink\Taxonomies\LinkGroup;
 use Vs\ReLink\Taxonomies\Partner;
@@ -52,7 +53,7 @@ final class AdminLayout {
 	/**
 	 * Navigation items.
 	 *
-	 * @return array<string, array{label: string, url: string, icon: string}>
+	 * @return array<string, array{label: string, url: string, icon: string, cap: string}>
 	 */
 	public static function get_nav_items(): array {
 		return [
@@ -60,36 +61,43 @@ final class AdminLayout {
 				'label' => __( 'All Links', 'vs-relink' ),
 				'url'   => admin_url( 'edit.php?post_type=' . ReLink::POST_TYPE ),
 				'icon'  => 'dashicons-list-view',
+				'cap'   => 'edit_relinks',
 			],
 			'add'      => [
 				'label' => __( 'Add Link', 'vs-relink' ),
 				'url'   => admin_url( 'admin.php?page=vs-relink-edit' ),
 				'icon'  => 'dashicons-plus-alt',
+				'cap'   => 'edit_relinks',
 			],
 			'partners' => [
 				'label' => __( 'Partners', 'vs-relink' ),
 				'url'   => admin_url( 'edit-tags.php?taxonomy=' . Partner::TAXONOMY . '&post_type=' . ReLink::POST_TYPE ),
 				'icon'  => 'dashicons-groups',
+				'cap'   => Capabilities::MANAGE_PARTNERS,
 			],
 			'groups'   => [
 				'label' => __( 'Groups', 'vs-relink' ),
 				'url'   => admin_url( 'edit-tags.php?taxonomy=' . LinkGroup::TAXONOMY . '&post_type=' . ReLink::POST_TYPE ),
 				'icon'  => 'dashicons-category',
+				'cap'   => 'edit_relinks',
 			],
 			'reports'  => [
 				'label' => __( 'Reports', 'vs-relink' ),
 				'url'   => admin_url( 'edit.php?post_type=' . ReLink::POST_TYPE . '&page=vs-relink-reports' ),
 				'icon'  => 'dashicons-chart-bar',
+				'cap'   => 'manage_options',
 			],
 			'tools'    => [
 				'label' => __( 'Tools', 'vs-relink' ),
 				'url'   => admin_url( 'edit.php?post_type=' . ReLink::POST_TYPE . '&page=vs-relink-tools' ),
 				'icon'  => 'dashicons-admin-tools',
+				'cap'   => 'manage_options',
 			],
 			'settings' => [
 				'label' => __( 'Settings', 'vs-relink' ),
 				'url'   => admin_url( 'edit.php?post_type=' . ReLink::POST_TYPE . '&page=vs-relink-settings' ),
 				'icon'  => 'dashicons-admin-generic',
+				'cap'   => 'manage_options',
 			],
 		];
 	}
@@ -152,6 +160,7 @@ final class AdminLayout {
 				<nav class="lwr-admin-nav" aria-label="<?php esc_attr_e( 'ReLink navigation', 'vs-relink' ); ?>">
 					<ul>
 						<?php foreach ( $items as $key => $item ) : ?>
+							<?php if ( ! current_user_can( $item['cap'] ) ) { continue; } ?>
 							<li class="<?php echo $active === $key ? 'is-active' : ''; ?>">
 								<a href="<?php echo esc_url( $item['url'] ); ?>">
 									<span class="dashicons <?php echo esc_attr( $item['icon'] ); ?>" aria-hidden="true"></span>

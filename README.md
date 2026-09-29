@@ -53,7 +53,7 @@ https://example.com/summer-sale/
 
 - Custom post type `vs_relink` with hierarchical slugs (folder-like structure)
 - Redirect types: **301**, **302**, **307**
-- Optional **forward query parameters** from the short URL to the target
+- Optional **forward query parameters** from the short URL to the target. Only `utm_*`, `gclid`, and `fbclid` are copied (filter `vs_relink_forward_param_keys` adds exact keys). Parameters already on the affiliate target are not replaced.
 - **404 fallback matching** — resolves deep paths even when rewrite rules miss a match
 
 ### Click tracking
@@ -62,7 +62,9 @@ https://example.com/summer-sale/
 - Per click: link ID, timestamp, IP, referrer, user agent, bot flag
 - Per-link toggle: enable/disable tracking
 - Global **bot exclusion** (Settings) — skips crawlers in statistics
-- **Log retention** — auto-delete old clicks (30 / 90 / 180 / 365 days, or keep forever)
+- **Click throttle** (on by default) — repeated hits from the same IP on the same short link are still redirected, but extra rows and webhooks are skipped for about a minute. There is also a per-IP ceiling. Turn it off under Settings if you need every hit.
+- **Client IP** is `REMOTE_ADDR` unless you list trusted proxy CIDRs. `X-Forwarded-For` and `Client-IP` are ignored when that list is empty.
+- **Log retention** — auto-delete old clicks only when you choose 30 / 90 / 180 / 365 days. The default is keep forever; nothing is deleted until that setting is changed.
 
 ### Auto-linker
 
@@ -86,6 +88,8 @@ Configure partners under **ReLinks → Partners**. Each partner stores:
 
 Legacy links without a partner still use a manual Target URL only — no behavior change.
 
+Partner terms (domains and the affiliate suffix) can be edited only by Administrators, or by a role you explicitly grant `manage_relink_partners`. The bot user below must not have that capability. Do not recreate partners that are already configured on the site.
+
 One product URL can have **separate ReLinks per partner** (duplicate detection is per original URL + partner).
 
 ### Link options (per ReLink)
@@ -98,13 +102,35 @@ One product URL can have **separate ReLinks per partner** (duplicate detection i
 | Redirect type | 301 / 302 / 307 |
 | No Follow | SEO attribute on auto-generated links |
 | Sponsored | Mark sponsored auto-links |
-| Forward parameters | Append `?utm_*` etc. from short URL to target |
+| Forward parameters | Append allowlisted tracking params (`utm_*`, `gclid`, `fbclid`) without replacing affiliate params already on the target |
 | Enable tracking | Toggle click logging |
 
 ### Webhooks
 
-- Global **Outbound Webhook URL** (Settings)
-- Non-blocking JSON `POST` on each tracked click (`event: link_click`)
+- Global **Outbound Webhook URL** (Settings). Only `http` and `https` are stored.
+- Non-blocking JSON `POST` on each **stored** click (`event: link_click`). Throttled hits do not send a webhook.
+- Optional **webhook secret**. When set, the request includes `X-VS-Relink-Signature: sha256=<hex>` where the hex is HMAC-SHA256 of the raw JSON body using that secret. Compare with a constant-time check on the raw body you received. An empty secret sends unsigned JSON, same as earlier versions. The secret is not printed on the public site.
+
+### Who can publish ReLinks
+
+ReLinks use their own capabilities (`edit_relinks`, `publish_relinks`, and the related delete/read variants), not the core `post` capabilities. **Author and Editor cannot create or publish ReLinks** and cannot change partner domains or affiliate suffixes.
+
+Administrators receive every ReLink capability, including `manage_relink` and `manage_relink_partners`. Reports, Tools, Settings, export, and the health check stay on `manage_options`.
+
+To give a custom role access later (this does not change existing partner terms):
+
+```bash
+wp role create relink_bot "ReLink Bot"
+wp cap add relink_bot read edit_relinks publish_relinks manage_relink
+```
+
+Add `manage_relink_partners` only if that role should edit affiliate domains and URL suffixes. Do not add `manage_options` if the role should not export every link or change settings.
+
+A human editor who should publish short links, but not administer the site, gets the same four capabilities as the bot role (`read`, `edit_relinks`, `publish_relinks`, `manage_relink`).
+
+### Privacy
+
+Click logs can contain IP addresses, referrers, and user agents. The plugin does not hash those values. Retention defaults to **keep forever**. Daily cleanup deletes rows only after an administrator sets Log Retention to 30, 90, 180, or 365 days. Document that storage in your own privacy notice if you enable tracking.
 
 ### Taxonomies
 
@@ -162,18 +188,50 @@ wp relink create --url="https://sonoff.tech/en-hu/products/sonoff-basic-din-rail
 wp relink create --url="https://sonoff.tech/..." --partner=sonoff-official
 ```
 
-## REST / Abilities API
+## REST API for Domomod Tube
 
-Admin-only routes under `wp-abilities/v1` (when supported):
+Application Passwords call the same routes as before. WordPress only accepts Application Passwords over HTTPS.
 
-| Ability | Description |
-|---------|-------------|
-| `relink/health-check` | Run link health check |
-| `relink/get-stats` | Aggregate statistics |
-| `relink/export` | Export links as JSON |
-| `relink/create-link` | Create affiliate link from original URL + partner |
+Create a bot user with the ReLink caps above (not Administrator). On that user's profile, create an Application Password (or `wp user application-password create relink-bot "Domomod Tube" --porcelain`). Send it as HTTP Basic auth. Remove the spaces WordPress prints in the password.
 
-Requires `manage_options`.
+Partner domains and affiliate suffixes on the live site are already configured. **Do not create or edit partners from the bot.** Pass the existing partner slug (ReLinks → Partners) on every call. For okosotthon.bolt.hu, use the partner whose domain list already includes that host.
+
+| Ability | Who | Body |
+|---------|-----|------|
+| `relink/preview-link` | `publish_relinks` or `manage_relink` | Dry-run. Same URL, partner, slug, and target as create. Nothing is saved. |
+| `relink/lookup-link` | `publish_relinks` or `manage_relink` | `original_url` + `partner`. Returns `short_url` or HTTP 404. |
+| `relink/create-link` | `publish_relinks` or `manage_relink` | Creates the short link, or returns the existing one (`existed: true`). |
+| `relink/get-stats` | `publish_relinks` or `manage_relink` | Aggregates. `days` is clamped to 1–366. |
+| `relink/export` | `manage_options` only | Full JSON export. |
+| `relink/health-check` | `manage_options` only | At most 10 links per call (`limit`, `offset`). One user cannot start another check for 30 seconds. |
+
+`wp relink create` and `wp relink create --dry-run` use the same `LinkFactory` path as `create-link` and `preview-link`.
+
+Create requests are limited per user (Settings → Create limit, default 120 per hour, `0` disables). Successful REST creates are appended to the option `vs_relink_create_audit` (latest 100: user, link, partner, URL, time). That log is not exposed on a public route.
+
+```bash
+# Preview (no write). Replace PARTNER_SLUG with the existing okosotthon partner slug.
+curl -sS -u 'relink-bot:APPLICATION_PASSWORD' \
+  -H 'Content-Type: application/json' \
+  -d '{"original_url":"https://okosotthon.bolt.hu/termek/example-product","partner":"PARTNER_SLUG"}' \
+  "https://example.com/wp-json/wp-abilities/v1/abilities/relink/preview-link/run"
+
+# Lookup. HTTP 404 when this product+partner pair has no short link yet.
+curl -sS -u 'relink-bot:APPLICATION_PASSWORD' \
+  -H 'Content-Type: application/json' \
+  -d '{"original_url":"https://okosotthon.bolt.hu/termek/example-product","partner":"PARTNER_SLUG"}' \
+  "https://example.com/wp-json/wp-abilities/v1/abilities/relink/lookup-link/run"
+
+# Create. Repeat calls return the same short_url with existed: true.
+curl -sS -u 'relink-bot:APPLICATION_PASSWORD' \
+  -H 'Content-Type: application/json' \
+  -d '{"original_url":"https://okosotthon.bolt.hu/termek/example-product","partner":"PARTNER_SLUG","redirect_type":"301"}' \
+  "https://example.com/wp-json/wp-abilities/v1/abilities/relink/create-link/run"
+```
+
+`original_url` must be `http` or `https`. `redirect_type` is `301`, `302`, or `307` (anything else is stored as `301`). Optional: `short_slug`, `title`, `tracking`, `nofollow`, `sponsored`, `forward_params`, `keywords`.
+
+Export and health-check with the same bot user return HTTP 403.
 
 ## Database
 
@@ -206,10 +264,15 @@ Requires `manage_options`.
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `vs_relink_base` | `re` | Permalink prefix (empty = root) |
+| `vs_relink_base` | `re` | Permalink prefix (empty = root). Sanitized to a slug. |
 | `vs_relink_exclude_bots` | `1` | Exclude bots from stats |
-| `vs_relink_log_retention` | `0` | Days to keep clicks (`0` = forever) |
-| `vs_relink_webhook_url` | — | Outbound webhook endpoint |
+| `vs_relink_log_retention` | `0` | Days to keep clicks (`0` = forever; no automatic deletion) |
+| `vs_relink_click_throttle` | `1` | `0` records every eligible click |
+| `vs_relink_trusted_proxies` | empty | CIDRs allowed to supply `X-Forwarded-For` |
+| `vs_relink_webhook_url` | — | Outbound webhook endpoint (`http`/`https` only) |
+| `vs_relink_webhook_secret` | — | HMAC key for `X-VS-Relink-Signature` |
+| `vs_relink_create_rate_limit` | `120` | REST creates per user per hour (`0` = off) |
+| `vs_relink_create_audit` | — | Latest bot create events (not autoloaded) |
 | `vs_relink_db_version` | `1.1.0` | Schema version |
 
 ## Architecture
@@ -228,7 +291,12 @@ vs-relink/
 │   │   ├── Permalinks.php        # Rewrite rules
 │   │   ├── AutoLinker.php
 │   │   ├── PartnerUrlBuilder.php
-│   │   ├── LinkFactory.php
+│   │   ├── LinkFactory.php       # create, preview, lookup, import
+│   │   ├── Capabilities.php
+│   │   ├── UrlGuard.php
+│   │   ├── ForwardParams.php
+│   │   ├── ClientIp.php
+│   │   ├── ClickThrottle.php
 │   │   ├── WebhookService.php
 │   │   └── LogRotation.php
 │   ├── Database/Schema.php

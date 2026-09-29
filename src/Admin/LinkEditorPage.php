@@ -34,7 +34,7 @@ final class LinkEditorPage {
 			'',
 			__( 'Edit ReLink', 'vs-relink' ),
 			__( 'Edit ReLink', 'vs-relink' ),
-			'edit_posts',
+			'edit_relinks',
 			self::PAGE_SLUG,
 			[ self::class, 'render_page' ]
 		);

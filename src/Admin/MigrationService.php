@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Vs\ReLink\Admin;
 
+use Vs\ReLink\Core\UrlGuard;
+
 use Vs\ReLink\PostTypes\ReLink;
 use Vs\ReLink\Taxonomies\LinkGroup;
 
@@ -65,10 +67,15 @@ final class MigrationService {
 	 * @return int|bool New post ID or false on failure.
 	 */
 	private static function migrate_single_link( array $data ): int|bool {
+		$target_url = esc_url_raw( (string) ( $data['url'] ?? '' ) );
+		if ( ! UrlGuard::is_http_url( $target_url ) ) {
+			return false;
+		}
+
 		// Check if it already exists by slug.
 		$existing = get_page_by_path( $data['slug'], OBJECT, ReLink::POST_TYPE );
 		if ( $existing ) {
-			return false; 
+			return false;
 		}
 
 		$slug_info = self::resolve_hierarchical_slug( $data['slug'] );
@@ -87,9 +94,8 @@ final class MigrationService {
 			return false;
 		}
 
-		// Update Metadata.
-		update_post_meta( $post_id, '_vs_relink_target_url', $data['url'] );
-		update_post_meta( $post_id, '_vs_relink_type', $data['redirect_type'] ?? '301' );
+		update_post_meta( $post_id, '_vs_relink_target_url', $target_url );
+		update_post_meta( $post_id, '_vs_relink_type', (string) UrlGuard::redirect_code( $data['redirect_type'] ?? '301' ) );
 		update_post_meta( $post_id, '_vs_relink_nofollow', ( $data['nofollow'] ?? 0 ) ? 'yes' : 'no' );
 		update_post_meta( $post_id, '_vs_relink_sponsored', ( $data['sponsored'] ?? 0 ) ? 'yes' : 'no' );
 		update_post_meta( $post_id, '_vs_relink_forward_params', ( $data['param_forwarding'] ?? 0 ) ? 'yes' : 'no' );

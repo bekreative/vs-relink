@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Vs\ReLink\Admin;
 
+use Vs\ReLink\Core\Capabilities;
 use Vs\ReLink\Core\PartnerUrlBuilder;
 use Vs\ReLink\Core\ShortUrlHelper;
+use Vs\ReLink\Core\UrlGuard;
 use Vs\ReLink\PostTypes\ReLink;
 use Vs\ReLink\Taxonomies\Partner;
 
@@ -27,16 +29,37 @@ final class LinkEditorService {
 			return new \WP_Error( 'invalid_post', __( 'Invalid link.', 'vs-relink' ) );
 		}
 
-		if ( ! current_user_can( 'edit_post', $post_id ) ) {
+		if ( ! current_user_can( 'edit_post', $post_id ) || ! Capabilities::current_user_may_publish() ) {
 			return new \WP_Error( 'forbidden', __( 'You cannot edit this link.', 'vs-relink' ) );
 		}
 
-		$title = isset( $data['post_title'] ) ? sanitize_text_field( (string) $data['post_title'] ) : '';
+		$title           = isset( $data['post_title'] ) ? sanitize_text_field( (string) $data['post_title'] ) : '';
+		$partner_id      = isset( $data['vs_relink_partner'] ) ? (int) $data['vs_relink_partner'] : 0;
+		$original_url    = isset( $data['vs_relink_original_url'] ) ? esc_url_raw( (string) $data['vs_relink_original_url'] ) : '';
+		$manual_target   = isset( $data['vs_relink_target_url'] ) ? esc_url_raw( (string) $data['vs_relink_target_url'] ) : null;
+		if ( $original_url !== '' && ! UrlGuard::is_http_url( $original_url ) ) {
+			return new \WP_Error( 'invalid_url', __( 'Original URL must use http or https.', 'vs-relink' ) );
+		}
+
+		$is_partner_mode = $partner_id > 0 && $original_url !== '';
+		if ( ! $is_partner_mode && is_string( $manual_target ) && $manual_target !== '' && ! UrlGuard::is_http_url( $manual_target ) ) {
+			return new \WP_Error( 'invalid_url', __( 'Target URL must use http or https.', 'vs-relink' ) );
+		}
+		if ( $is_partner_mode ) {
+			$computed = PartnerUrlBuilder::build_target_url(
+				PartnerUrlBuilder::normalize_original_url( $original_url ),
+				PartnerUrlBuilder::get_partner_suffix( $partner_id )
+			);
+			if ( ! UrlGuard::is_http_url( $computed ) ) {
+				return new \WP_Error( 'invalid_url', __( 'Computed target URL must use http or https.', 'vs-relink' ) );
+			}
+		}
+
 		if ( $title !== '' ) {
 			wp_update_post(
 				[
-					'ID'         => $post_id,
-					'post_title' => $title,
+					'ID'          => $post_id,
+					'post_title'  => $title,
 					'post_status' => 'publish',
 				]
 			);
@@ -48,10 +71,6 @@ final class LinkEditorService {
 				]
 			);
 		}
-
-		$partner_id   = isset( $data['vs_relink_partner'] ) ? (int) $data['vs_relink_partner'] : 0;
-		$original_url = isset( $data['vs_relink_original_url'] ) ? esc_url_raw( (string) $data['vs_relink_original_url'] ) : '';
-		$is_partner_mode = $partner_id > 0 && $original_url !== '';
 
 		if ( $is_partner_mode ) {
 			$normalized = PartnerUrlBuilder::normalize_original_url( $original_url );
@@ -68,8 +87,8 @@ final class LinkEditorService {
 				delete_post_meta( $post_id, '_vs_relink_original_url' );
 			}
 
-			if ( isset( $data['vs_relink_target_url'] ) ) {
-				update_post_meta( $post_id, '_vs_relink_target_url', esc_url_raw( (string) $data['vs_relink_target_url'] ) );
+			if ( is_string( $manual_target ) ) {
+				update_post_meta( $post_id, '_vs_relink_target_url', $manual_target );
 			}
 
 			if ( $partner_id > 0 ) {
@@ -77,6 +96,10 @@ final class LinkEditorService {
 			} else {
 				wp_set_object_terms( $post_id, [], Partner::TAXONOMY, false );
 			}
+		}
+
+		if ( isset( $data['vs_relink_type'] ) ) {
+			$data['vs_relink_type'] = (string) UrlGuard::redirect_code( $data['vs_relink_type'] );
 		}
 
 		$fields = [

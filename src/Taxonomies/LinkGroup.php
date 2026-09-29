@@ -42,6 +42,12 @@ final class LinkGroup {
 			'query_var'         => true,
 			'rewrite'           => [ 'slug' => 're-group' ],
 			'show_in_rest'      => true,
+			'capabilities'      => [
+				'manage_terms' => 'edit_relinks',
+				'edit_terms'   => 'edit_relinks',
+				'delete_terms' => 'edit_relinks',
+				'assign_terms' => 'edit_relinks',
+			],
 		];
 
 		register_taxonomy( self::TAXONOMY, [ \Vs\ReLink\PostTypes\ReLink::POST_TYPE ], $args );

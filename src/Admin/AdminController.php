@@ -198,9 +198,12 @@ final class AdminController {
 			wp_die();
 		}
 
-		$links   = $_POST['links'] ?? [];
-		$find    = sanitize_text_field( $_POST['find'] ?? '' );
-		$replace = sanitize_text_field( $_POST['replace'] ?? '' );
+		$links = isset( $_POST['links'] ) ? wp_unslash( $_POST['links'] ) : [];
+		if ( ! is_array( $links ) ) {
+			wp_send_json_error( [ 'message' => __( 'Invalid import payload.', 'vs-relink' ) ] );
+		}
+		$find    = sanitize_text_field( wp_unslash( (string) ( $_POST['find'] ?? '' ) ) );
+		$replace = sanitize_text_field( wp_unslash( (string) ( $_POST['replace'] ?? '' ) ) );
 
 		$result = DataService::import_from_json( $links, $find, $replace );
 		flush_rewrite_rules();
@@ -215,12 +218,15 @@ final class AdminController {
 			return;
 		}
 		if ( ! current_user_can( 'manage_options' ) ) {
-			return;
+			wp_die( esc_html__( 'You cannot download these rules.', 'vs-relink' ), 403 );
 		}
+
+		check_admin_referer( 'vs_relink_download_htaccess' );
 
 		$htaccess = DataService::generate_htaccess();
 
-		header( 'Content-Type: text/plain' );
+		nocache_headers();
+		header( 'Content-Type: text/plain; charset=utf-8' );
 		header( 'Content-Disposition: attachment; filename=".htaccess-relink-export"' );
 		echo $htaccess;
 		exit;
@@ -277,10 +283,78 @@ final class AdminController {
 	 * Register plugin settings.
 	 */
 	public function register_settings(): void {
-		register_setting( 'vs_relink_settings', 'vs_relink_base' );
-		register_setting( 'vs_relink_settings', 'vs_relink_exclude_bots' );
-		register_setting( 'vs_relink_settings', 'vs_relink_log_retention' );
-		register_setting( 'vs_relink_settings', 'vs_relink_webhook_url' );
+		register_setting(
+			'vs_relink_settings',
+			'vs_relink_base',
+			[
+				'type'              => 'string',
+				'sanitize_callback' => [ SettingsSanitizer::class, 'sanitize_base' ],
+				'default'           => 're',
+			]
+		);
+		register_setting(
+			'vs_relink_settings',
+			'vs_relink_exclude_bots',
+			[
+				'type'              => 'string',
+				'sanitize_callback' => [ SettingsSanitizer::class, 'sanitize_flag' ],
+				'default'           => '1',
+			]
+		);
+		register_setting(
+			'vs_relink_settings',
+			'vs_relink_log_retention',
+			[
+				'type'              => 'string',
+				'sanitize_callback' => [ SettingsSanitizer::class, 'sanitize_retention' ],
+				'default'           => '0',
+			]
+		);
+		register_setting(
+			'vs_relink_settings',
+			'vs_relink_webhook_url',
+			[
+				'type'              => 'string',
+				'sanitize_callback' => [ SettingsSanitizer::class, 'sanitize_webhook_url' ],
+				'default'           => '',
+			]
+		);
+		register_setting(
+			'vs_relink_settings',
+			'vs_relink_webhook_secret',
+			[
+				'type'              => 'string',
+				'sanitize_callback' => [ SettingsSanitizer::class, 'sanitize_webhook_secret' ],
+				'default'           => '',
+			]
+		);
+		register_setting(
+			'vs_relink_settings',
+			'vs_relink_click_throttle',
+			[
+				'type'              => 'string',
+				'sanitize_callback' => [ SettingsSanitizer::class, 'sanitize_flag' ],
+				'default'           => '1',
+			]
+		);
+		register_setting(
+			'vs_relink_settings',
+			'vs_relink_trusted_proxies',
+			[
+				'type'              => 'string',
+				'sanitize_callback' => [ SettingsSanitizer::class, 'sanitize_trusted_proxies' ],
+				'default'           => '',
+			]
+		);
+		register_setting(
+			'vs_relink_settings',
+			'vs_relink_create_rate_limit',
+			[
+				'type'              => 'integer',
+				'sanitize_callback' => [ SettingsSanitizer::class, 'sanitize_create_rate' ],
+				'default'           => 120,
+			]
+		);
 	}
 
 	/**

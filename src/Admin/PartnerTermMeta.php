@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Vs\ReLink\Admin;
 
+use Vs\ReLink\Core\Capabilities;
 use Vs\ReLink\Taxonomies\Partner;
 
 /**
@@ -19,6 +20,33 @@ final class PartnerTermMeta {
 		add_action( Partner::TAXONOMY . '_edit_form_fields', [ $this, 'render_edit_fields' ] );
 		add_action( 'created_' . Partner::TAXONOMY, [ $this, 'save_term_meta' ] );
 		add_action( 'edited_' . Partner::TAXONOMY, [ $this, 'save_term_meta' ] );
+	}
+
+	/**
+	 * Block partner domain/suffix writes unless the user may manage partners.
+	 */
+	public static function register_meta_guards(): void {
+		add_filter( 'add_term_metadata', [ self::class, 'guard_term_meta' ], 10, 3 );
+		add_filter( 'update_term_metadata', [ self::class, 'guard_term_meta' ], 10, 3 );
+		add_filter( 'delete_term_metadata', [ self::class, 'guard_term_meta' ], 10, 3 );
+	}
+
+	/**
+	 * @param mixed $check Short-circuit value.
+	 * @return mixed
+	 */
+	public static function guard_term_meta( $check, $term_id, $meta_key ) {
+		unset( $term_id );
+
+		if ( ! in_array( (string) $meta_key, [ Partner::META_DOMAINS, Partner::META_URL_SUFFIX ], true ) ) {
+			return $check;
+		}
+
+		if ( Capabilities::current_user_may_manage_partners() ) {
+			return $check;
+		}
+
+		return false;
 	}
 
 	/**
@@ -77,7 +105,7 @@ final class PartnerTermMeta {
 	 * @param int $term_id Term ID.
 	 */
 	public function save_term_meta( int $term_id ): void {
-		if ( ! current_user_can( 'manage_categories' ) ) {
+		if ( ! Capabilities::current_user_may_manage_partners() ) {
 			return;
 		}
 

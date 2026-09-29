@@ -17,7 +17,7 @@ final class LinkChecker {
 	 * @param int $post_id ReLink Post ID.
 	 * @return array Results of the check.
 	 */
-	public static function check_link( int $post_id ): array {
+	public static function check_link( int $post_id, int $timeout = 10 ): array {
 		$target_url = get_post_meta( $post_id, '_vs_relink_target_url', true );
 		$short_url  = get_permalink( $post_id );
 
@@ -25,8 +25,10 @@ final class LinkChecker {
 			return [ 'success' => false, 'message' => __( 'No target URL configured.', 'vs-relink' ) ];
 		}
 
+		$timeout = max( 1, min( 10, $timeout ) );
+
 		// Test the redirection
-		$response = wp_remote_head( $short_url, [ 'redirection' => 0, 'timeout' => 10 ] );
+		$response = wp_remote_head( $short_url, [ 'redirection' => 0, 'timeout' => $timeout ] );
 		
 		if ( is_wp_error( $response ) ) {
 			return [ 'success' => false, 'message' => __( 'Short URL unreachable.', 'vs-relink' ) . ' ' . $response->get_error_message() ];

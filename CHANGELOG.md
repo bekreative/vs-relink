@@ -7,6 +7,31 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [2.1.0] — 2026-09-29
+
+### Security
+
+- ReLinks use custom capabilities (`edit_relinks`, `publish_relinks`, and the related primitives). Author and Editor can no longer publish site redirects. Administrators keep full access.
+- Partner domains and affiliate suffixes require `manage_options` or `manage_relink_partners`. The partner taxonomy is not exposed in REST.
+- JSON import stores only `http`/`https` targets, caps the batch size, and creates rows through `LinkFactory`.
+- Query forwarding copies allowlisted keys only (`utm_*`, `gclid`, `fbclid`, filterable) and does not replace parameters already on the target.
+- Public clicks are throttled per IP and per IP+link. The visitor is still redirected. Client IP defaults to `REMOTE_ADDR`; `X-Forwarded-For` is used only for configured trusted proxies.
+- Redirects refuse non-http(s) targets. Redirect type is limited to 301, 302, or 307.
+- Settings values are sanitized on save. Optional webhook HMAC (`X-VS-Relink-Signature`). `.htaccess` download requires a nonce.
+- REST abilities declare argument schemas. Health check is paged and rate-limited. Export and health check stay on `manage_options`.
+
+### Added
+
+- REST `relink/preview-link` and `relink/lookup-link` for Application Password bots (`publish_relinks` or `manage_relink`).
+- Per-user create rate limit and a short audit log of REST creates (`vs_relink_create_audit`).
+- Settings for trusted proxies, click throttle, create limit, and webhook secret.
+
+### Changed
+
+- `relink/create-link` and `relink/get-stats` accept `publish_relinks` or `manage_relink` instead of requiring `manage_options`.
+- `wp relink create --dry-run` prints the redirect type from the same `LinkFactory` preview used by REST.
+- Existing published short URLs and permalinks are unchanged. Click retention still defaults to keep forever and does not delete rows unless a retention period is saved.
+
 ## [2.0.1] — 2026-07-28
 
 ### Changed
@@ -89,7 +114,8 @@ First public release.
 
 - Comprehensive `README.md` (install, URLs, features, schema, architecture).
 
-[Unreleased]: https://github.com/bekreative/vs-relink/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/bekreative/vs-relink/compare/v2.1.0...HEAD
+[2.1.0]: https://github.com/bekreative/vs-relink/compare/v2.0.1...v2.1.0
 [1.3.0]: https://github.com/bekreative/vs-relink/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/bekreative/vs-relink/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/bekreative/vs-relink/releases/tag/v1.1.0
